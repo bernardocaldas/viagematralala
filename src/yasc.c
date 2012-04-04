@@ -6,7 +6,7 @@
 #include <stack.h>
 #include <string.h>
 
-#define MAXLINHA 20
+#define MAXLINHA 21
 
 
 int main(int argc, char* argv[])
