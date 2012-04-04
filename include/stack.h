@@ -13,5 +13,4 @@ typedef struct StackElement
 Stack * CreateStack();
 void PushStack(Stack **, int);
 int PopStack(Stack **);
-
 #endif

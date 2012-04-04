@@ -19,3 +19,4 @@ int PopStack(Stack ** inicio)
 	(*inicio)=(*inicio)->next;
 	return temp->num;
 }
+
