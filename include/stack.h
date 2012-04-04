@@ -8,9 +8,12 @@ typedef struct StackElement
 {
 	struct StackElement *next;
 	int num;
+	int count;
 } Stack;
 
 Stack * CreateStack();
 void PushStack(Stack **, int);
 int PopStack(Stack **);
+int EmptyStack(Stack ** );
+int OneOp(Stack ** );
 #endif

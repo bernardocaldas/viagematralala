@@ -6,7 +6,7 @@
 #include <stack.h>
 #include <string.h>
 
-#define MAXLINHA 21
+#define MAXLINHA 20
 
 
 int main(int argc, char* argv[])
@@ -30,6 +30,18 @@ int main(int argc, char* argv[])
 			else
 			{
 				sscanf(result,"%c",&ctemp);
+				if(EmptyStack(&stack) == 0)
+				{
+					printf("Pilha vazia. Operação inválida\n");
+				}
+				else
+				{
+				if(OneOp(&stack)==0){
+					printf("Apenas um elemento. Operação inválida\n");
+				}
+				
+				else
+				{
 				if(ctemp=='+')
 				{
 					printf("Apanhei uma soma\n");
@@ -38,6 +50,8 @@ int main(int argc, char* argv[])
 					opResult=opA+opB;
 					PushStack(&stack,opResult);
 					printf("%d+%d=%d\n",opA,opB,opResult);
+				}
+				}
 				}
 			}
 			result=strtok(NULL,delims);
