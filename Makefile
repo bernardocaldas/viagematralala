@@ -3,15 +3,19 @@ vpath %.h include/
 vpath %.c src/
 
 CC = gcc
+
 CFLAGS = 
 
 all: yasc server cliente
 
-yasc: yasc.o 
-	$(CC) $(CFLAGS) -o bin/yasc obj/yasc.o
+yasc: yasc.o stack.o
+	$(CC) $(CFLAGS) -o bin/yasc obj/yasc.o obj/stack.o
 	
-yasc.o: yasc.c
+yasc.o: yasc.c stack.h
 	$(CC) $(CFLAGS) -o obj/yasc.o -I include/ -c src/yasc.c
+
+stack.o: stack.c stack.h
+	$(CC) $(CFLAGS) -o obj/stack.o -I include/ -c src/stack.c
 
 server: server.o
 	$(CC) $(CFLAGS) -o bin/server obj/server.o
@@ -24,6 +28,9 @@ cliente: cliente.o
 	
 cliente.o: cliente.c
 	$(CC) $(CFLAGS) -o obj/cliente.o -c src/cliente.c
+
+
+
 
 clean:
 	rm obj/*.o
