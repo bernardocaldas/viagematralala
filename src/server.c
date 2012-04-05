@@ -1,8 +1,14 @@
-/* A simple server in the internet domain using TCP
-   The port number is passed as an argument */
+/* 
+Author: Allmighty Internet
+
+Description: A simple server in the internet domain using TCP
+The port number is passed as an argument 
+
+Problems: makefile does not work with all the previous flags
+*/
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <sys/types.h> 
 #include <sys/socket.h>
@@ -47,9 +53,9 @@ int main(int argc, char *argv[])
      pid=fork();
      while(1){
        if(pid<0){
-	 error("ERROR on forking\n");
+	 	error("ERROR on forking\n");
        }
-       //Processo Filho (responsavel pela leitura e resposta)
+       /*Processo Filho (responsavel pela leitura e resposta)*/
        if(pid==0){
 	 bzero(buffer,256);
 	 n = read(newsockfd,buffer,255);
@@ -58,7 +64,7 @@ int main(int argc, char *argv[])
 	 n = write(newsockfd,"I got your message",18);
 	 if (n < 0) error("ERROR writing to socket");
        }
-       //Processo Pai (responsavel pela escrita para o cliente)
+       /*Processo Pai (responsavel pela escrita para o cliente)*/
        else{
 	 bzero(buffer,256);
 	 fgets(buffer, 255, stdin);
