@@ -14,6 +14,19 @@ Problems: makefile does not work with all the previous flags
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+void * tratamento (void * arg){
+
+	 bzero(buffer,256);
+	 n = read(newsockfd,buffer,255);
+	 if (n < 0) error("ERROR reading from socket");
+	 printf("Here is the message: %s\n",buffer);
+	 n = write(newsockfd,"I got your message",18);
+	 if (n < 0) error("ERROR writing to socket");
+       
+     close(newsockfd);
+
+}
+
 void error(const char *msg)
 {
     perror(msg);
@@ -22,6 +35,11 @@ void error(const char *msg)
 
 int main(int argc, char *argv[])
 {
+/* THREADS */
+	pthread_t * threads;
+	threads = (pthread_t) malloc (1*sizeof(pthread_t));
+
+/* SOCKETS */
      int sockfd, newsockfd, portno;
      socklen_t clilen;
      char buffer[256];
@@ -45,36 +63,18 @@ int main(int argc, char *argv[])
               error("ERROR on binding");
      listen(sockfd,5);
      clilen = sizeof(cli_addr);
-     newsockfd = accept(sockfd, 
-                 (struct sockaddr *) &cli_addr, 
-                 &clilen);
-     if (newsockfd < 0) 
+	 while(1){
+     	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+     	if (newsockfd < 0) 
           error("ERROR on accept");
-     pid=fork();
-     while(1){
-       if(pid<0){
-	 	error("ERROR on forking\n");
-       }
-       /*Processo Filho (responsavel pela leitura e resposta)*/
-       if(pid==0){
-	 bzero(buffer,256);
-	 n = read(newsockfd,buffer,255);
-	 if (n < 0) error("ERROR reading from socket");
-	 printf("Here is the message: %s\n",buffer);
-	 n = write(newsockfd,"I got your message",18);
-	 if (n < 0) error("ERROR writing to socket");
-       }
-       /*Processo Pai (responsavel pela escrita para o cliente)*/
-       else{
-	 bzero(buffer,256);
-	 fgets(buffer, 255, stdin);
-	 n = write(newsockfd, buffer, 255);
-	 if(n<0)
-	   error("ERROR writing to socket");
-       }
+		
+		if (pthread_create(&threads[1], NULL, tratamento, (void *)&targ[j]) != 0) 
+		{
+		printf("Erro a criar thread\n");
+		exit(-1);
+		}
 
      }
-     close(newsockfd);
      close(sockfd);
      return 0; 
 }

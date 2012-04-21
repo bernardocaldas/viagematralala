@@ -51,13 +51,10 @@ int main(int argc, char *argv[])
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
         error("ERROR connecting");
-    pid = fork();
-    while(1){
-      if(pid<0){
-	error("ERROR on forking\n");
-      }
-      /*Processo filho*/
-      if(pid==0){
+
+
+
+
 	printf("Please enter the message: ");
 	bzero(buffer,256);
 	fgets(buffer,255,stdin);
@@ -65,17 +62,13 @@ int main(int argc, char *argv[])
 	if (n < 0) 
 	  error("ERROR writing to socket");
 
-      }
-      /*Processo pai*/
-      else{
-	bzero(buffer,256);
-	n = read(sockfd,buffer,255);
+	n = read(sockfd,buffer,18);
 	if(n<0)
 	  error("ERROR reading from socket");
 	printf("PAI(leitura):%s\n",buffer);
-      }
+     
 
-    }
+    
     close(sockfd);
     return 0;
 }
