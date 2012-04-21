@@ -57,18 +57,25 @@ int main(int argc, char *argv[])
 
 	printf("Please enter the message: ");
 	bzero(buffer,256);
-	fgets(buffer,255,stdin);
-	n = write(sockfd,buffer,strlen(buffer));
-	if (n < 0) 
-	  error("ERROR writing to socket");
+	while(fgets(buffer,255,stdin)!=NULL){
 
-	n = read(sockfd,buffer,18);
-	if(n<0)
-	  error("ERROR reading from socket");
-	printf("PAI(leitura):%s\n",buffer);
-     
+		n = write(sockfd,buffer,strlen(buffer));
+		if (n < 0) 
+		  error("ERROR writing to socket");
+		  
+		if( strcmp(buffer,"K\n")==0){
+			printf("Cliente terminou\n");
+			exit(0);
+		}
 
-    
+		n = read(sockfd,buffer,255);
+		if(n<0)
+		  error("ERROR reading from socket");
+		printf("PAI(leitura):%s\n",buffer);
+		
+		printf("Please enter the message: ");
+		bzero(buffer,256);
+    }
     close(sockfd);
     return 0;
 }

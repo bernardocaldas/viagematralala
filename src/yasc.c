@@ -1,25 +1,50 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <pthread.h>
-#include <stack.h>
-#include <string.h>
+/* Yet Another Simple Calculator
+
+A função de que consiste o programa é invocada por server.c para servir como código das threads criadas
+
+
+*/
+#include "stack.h"
+#include "yasc.h"
 
 #define MAXLINHA 20
 
 
-int main(int argc, char* argv[])
+void * yasc (void * arg)
 {	
 	Stack * stack = CreateStack();
-	char entrada[MAXLINHA];
 	char ctemp;
 	int itemp,opA,opB,opResult;
 	char * result;
 	char delims[2]={' ',';'};
-	while(fgets(entrada,MAXLINHA-1,stdin)!=NULL)
+	char buffer[256];
+	char msg[256];
+    int newsockfd, n;
+    int * status;
+    
+    status =(int*)malloc(1*sizeof(int));
+    
+    targ * argument;
+	bzero(buffer,256);
+	argument = (targ*) arg;
+	newsockfd = argument->socket;
+	
+	/* leitura e resposta inicial*/
+	n = read(newsockfd,buffer,255);
+	if (n < 0){
+		error("ERROR reading from socket");
+		exit(-1);
+	}
+	strcpy(msg, "Message Received\n");
+	n = write(newsockfd, msg, 255);
+	if (n < 0){
+		error("ERROR writing to socket");
+		exit(-2);
+	}
+
+	while(strcmp((char*)buffer, "K\n")!=0)
 	{
-		result=strtok(entrada,delims);
+		result=strtok((char*)buffer,delims);
 		while(result!=NULL)
 		{
 			if(sscanf(result,"%d",&itemp)==1)
@@ -29,19 +54,47 @@ int main(int argc, char* argv[])
 			}
 			else
 			{
-				sscanf(result,"%c",&ctemp);
-				if(ctemp=='+')
+				if(sscanf(result,"%c",&ctemp)==1){
+				if(EmptyStack(&stack) == 0)
 				{
-					printf("Apanhei uma soma\n");
-					opA=PopStack(&stack);
-					opB=PopStack(&stack);
-					opResult=opA+opB;
-					PushStack(&stack,opResult);
-					printf("%d+%d=%d\n",opA,opB,opResult);
+					printf("Pilha vazia: Operação inválida\n");
+				}
+				else{
+					if(OneOp(&stack)==0){
+						printf("Apenas um elemento: Operação inválida\n");
+					}
+					else{
+						if(ctemp=='+'){
+							printf("Apanhei uma soma\n");
+							opA=PopStack(&stack);
+							opB=PopStack(&stack);
+							opResult=opA+opB;
+							PushStack(&stack,opResult);
+							printf("%d+%d=%d\n",opA,opB,opResult);
+						}
+					}
+				}
 				}
 			}
 			result=strtok(NULL,delims);
 		}
+		if (result == NULL){ /* talvez esta verificação seja redundante*/
+			bzero(buffer,256);
+			n = read(newsockfd,buffer,255);
+			if (n < 0) {
+				error("ERROR reading from socket");
+				exit(-1);
+			}
+			n = write(newsockfd, msg, 255);
+			if (n < 0) {
+				error("ERROR writing to socket");
+				exit(-2);
+			}
+		}
 	}
-	return 0;
+	
+	printf("Thread vai fechar o seu socket\n");
+	close(newsockfd);
+	*status = 0;
+	pthread_exit(&status);
 }
