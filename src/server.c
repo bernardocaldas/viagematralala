@@ -6,7 +6,8 @@ The port number is passed as an argument;
 unilateral communication;
 each time a request is made a thread is created to deal with it;
 
-Problems: makefile does not work with all the previous flags
+Problems: makefile does not work with all the previous flags;
+ctrl+D in client kills the server also
 */
 
 #include <sys/socket.h>
