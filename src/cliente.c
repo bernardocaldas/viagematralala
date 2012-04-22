@@ -17,6 +17,7 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
+#include "protocol.h"
 
 void error(const char *msg)
 {
@@ -26,12 +27,20 @@ void error(const char *msg)
 
 int main(int argc, char *argv[])
 {
-    int sockfd, portno, n;
+    int sockfd, portno, n, ntemp,aux;
+    char ctemp;
     struct sockaddr_in serv_addr;
     struct hostent *server;
     pid_t pid;
+    package * tosend, *torecv;
+    char delims[3]={' ',';','\n'};
+    char * result;
+    char buffer[LEN+1];
+    char lixo[LEN+1];
+    
+    tosend = (package*) malloc(sizeof(package));
+    torecv = (package*) malloc(sizeof(package));
 
-    char buffer[256];
     if (argc < 3) {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(0);
@@ -56,25 +65,48 @@ int main(int argc, char *argv[])
 
 
 	printf("Please enter the message: ");
-	bzero(buffer,256);
-	while(fgets(buffer,255,stdin)!=NULL){
-
-		n = write(sockfd,buffer,strlen(buffer));
-		if (n < 0) 
-		  error("ERROR writing to socket");
-		  
-		if( strcmp(buffer,"K\n")==0){
-			printf("Cliente terminou\n");
-			exit(0);
-		}
-
-		n = read(sockfd,buffer,255);
-		if(n<0)
-		  error("ERROR reading from socket");
-		printf("PAI(leitura):%s\n",buffer);
+	bzero(buffer,LEN+1);
+	while(fgets(buffer,LEN,stdin)!=NULL){
+		result=strtok((char*)buffer,delims);
+		while (result != NULL){
+			/*printf("result = %s\n", result);*/
+			/* ENVIO DE CARACTER*/
+			if(sscanf(result, "%d%s", &ntemp, lixo)==1){
+				printf("Achei um inteiro %d\n", ntemp);
+				tosend->data = htonl(ntemp);
+				tosend->op = 'D';
+			} else {
+				/*ENVIO DE INTEIRO*/
+				if(sscanf(result, "%c%s", &ctemp, lixo)==1){
+				printf("Achei um caracter %c\n", ctemp);
+				tosend->data = htonl(0);
+				tosend->op = ctemp;	
+				} else {
+				printf("Escreva comandos válidos\n");
+				break;
+				}
+			}
+			
 		
+			n = write(sockfd,tosend,sizeof(package));
+			if (n < 0) 
+			  error("ERROR writing to socket");
+		
+			if(ctemp == 'K' ){
+				printf("Cliente terminou\n");
+				exit(0);
+			}			  
+		
+			n = read(sockfd,torecv,sizeof(package));
+			if(n<0)
+			  error("ERROR reading from socket");
+			printf("Message from abroad:%c %d\n",torecv->op, ntohl(torecv->data));
+		
+			result = strtok(NULL, delims);
+		}
 		printf("Please enter the message: ");
 		bzero(buffer,256);
+    	
     }
     close(sockfd);
     return 0;

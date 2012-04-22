@@ -27,11 +27,6 @@ int PopStack(Stack ** inicio)
 	return temp->num;
 }
 
-int DepthStack(Stack ** inicio)
-{
-	return (*inicio)->count;	
-}
-
 int EmptyStack(Stack ** inicio)
 {
 	Stack * temp =(*inicio);
@@ -41,3 +36,13 @@ int EmptyStack(Stack ** inicio)
 		return 1;
 	}
 }
+
+int DepthStack(Stack ** inicio)
+{
+	if(EmptyStack(inicio)==0)
+		return 0;
+	else
+	return (*inicio)->count;	
+}
+
+
