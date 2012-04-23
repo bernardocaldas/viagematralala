@@ -32,5 +32,8 @@ stack.o: stack.c stack.h
 
 clean:
 	rm obj/*.o
+	rm bin/*
+	rm src/*.c~
+	rm include/*.h~
 
 

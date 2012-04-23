@@ -14,8 +14,46 @@ ctrl+D in client kills the server also
 #include <netinet/in.h>
 #include <pthread.h>
 #include "yasc.h"
+#include "fifo.h"
+#include "pool.h"
+
+#define POOL_NO 5
 
 
+fifo_node * front;
+fifo_node * back;
+
+void * dispatcher (){
+	fifo_node * current;
+	pthread_t * threads;
+	int i;
+	
+	threads = (pthread_t *) malloc (POOL_NO*sizeof(pthread_t));
+
+	
+	for(i=0; i< POOL_NO; i++){
+		if (pthread_create(dispatcher, NULL, dispatcher, NULL) != 0) 
+		{
+			error("ERROR creating thread\n");
+			exit(-1);
+		}
+	}
+	
+	while (1){
+		if(fifo_cnt == 0)
+			pause();
+		/* servidor acorda-o*/
+		/* Entrada Regiao Critica */
+		current = dequeue(front);
+		/* Saida Regiao Critica */
+		if(free_cnt==0) /* free_cnt implica que cada thread actualize este contador; regiao critica no final do yasc */
+			pause(); /* garantir que servidor não acorda este sinal; controlado pelas threads*/		
+		/* Distribuição para a lista */	
+		
+		/* função que procura na lista a primeira thread livre. Vai encontrar uma thread livre (dada a condiçao anterior) e colocará no campo int * socket a informação relativa ao novo file descriptor. Em seguida envia um sinal para que a thread acorde */
+
+	}
+}
 
 void error(const char *msg)
 {
@@ -27,11 +65,13 @@ void error(const char *msg)
 
 int main(int argc, char *argv[])
 {
+/* FIFO */
+
+	create_fifo(front, back);
+
 /* THREADS */
-	pthread_t * threads;
-	targ * arg;
-	threads = (pthread_t *) malloc (1*sizeof(pthread_t));
-	arg = (targ *) malloc (1*sizeof(targ));
+	pthread_t * dispatcher;
+	dispatcher = (pthread_t *) malloc (1*sizeof(pthread_t));
 
 /* SOCKETS */
      int sockfd, newsockfd, portno;
@@ -54,7 +94,7 @@ int main(int argc, char *argv[])
      if (bind(sockfd, (struct sockaddr *) &serv_addr,
               sizeof(serv_addr)) < 0) 
               error("ERROR on binding");
-     listen(sockfd,5);
+     listen(sockfd,5); /* 5 significa o q?????*/
      clilen = sizeof(cli_addr);
 	 
 	 
@@ -63,12 +103,14 @@ int main(int argc, char *argv[])
      	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
      	if (newsockfd < 0) 
           error("ERROR on accept");
-		arg->socket = newsockfd;
-		if (pthread_create(threads, NULL, yasc, (void *)arg) != 0) 
-		{
-			error("ERROR creating thread\n");
-			exit(-1);
-		}
+        /* Entrada na regiao critica*/
+        
+        queue (back, newsockfd);
+        if(fifo_cnt == 1){ /* se fifo_cnt está a '1' então antes estava a zero */
+        	/* Sinal para dispatcher */
+        }
+        /* Saida da regiao critica*/
+        
      }
      close(sockfd);
      return 0; 
