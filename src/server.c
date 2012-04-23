@@ -13,6 +13,7 @@ ctrl+D in client kills the server also
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <signal.h>
 #include "yasc.h"
 #include "fifo.h"
 #include "pool.h"
@@ -23,28 +24,49 @@ ctrl+D in client kills the server also
 fifo_node * front;
 fifo_node * back;
 
+pthread_mutex_t mux;
+
+sigset_t  set;
+
+void error(const char *msg)
+{
+    perror(msg);
+    exit(1);
+}
+
+void tratamento (int sigNumb){
+	
+}
+
 void * dispatcher (){
 	fifo_node * current;
 	pthread_t * threads;
-	int i;
+	int i, *sig;
 	
+	/* SIGNALS */
+    signal(SIGUSR1, tratamento);
+    sigemptyset(&set);
+	sigaddset(&set, SIGUSR1);
 	threads = (pthread_t *) malloc (POOL_NO*sizeof(pthread_t));
 
-	
+	/* INDEPENDENTE */ 
+	/*
 	for(i=0; i< POOL_NO; i++){
-		if (pthread_create(dispatcher, NULL, dispatcher, NULL) != 0) 
+		if (pthread_create(&threads[i], NULL, yasc, NULL) != 0) 
 		{
 			error("ERROR creating thread\n");
 			exit(-1);
 		}
 	}
+	*/
 	
 	while (1){
 		if(fifo_cnt == 0)
-			pause();
+			sigwait(&set, sig);
+			printf("Tratei o sinal\n");
 		/* servidor acorda-o*/
 		/* Entrada Regiao Critica */
-		current = dequeue(front);
+		current = dequeue(&front);
 		/* Saida Regiao Critica */
 		if(free_cnt==0) /* free_cnt implica que cada thread actualize este contador; regiao critica no final do yasc */
 			pause(); /* garantir que servidor não acorda este sinal; controlado pelas threads*/		
@@ -55,23 +77,20 @@ void * dispatcher (){
 	}
 }
 
-void error(const char *msg)
-{
-    perror(msg);
-    exit(1);
-}
-
-
 
 int main(int argc, char *argv[])
 {
+/* MUTEX */
+
+	pthread_mutex_init(&mux, NULL);
+
 /* FIFO */
 
-	create_fifo(front, back);
+	create_fifo(&front, &back);
 
 /* THREADS */
-	pthread_t * dispatcher;
-	dispatcher = (pthread_t *) malloc (1*sizeof(pthread_t));
+	pthread_t * dispatcher_t;
+	dispatcher_t = (pthread_t *) malloc (1*sizeof(pthread_t));
 
 /* SOCKETS */
      int sockfd, newsockfd, portno;
@@ -96,20 +115,29 @@ int main(int argc, char *argv[])
               error("ERROR on binding");
      listen(sockfd,5); /* 5 significa o q?????*/
      clilen = sizeof(cli_addr);
-	 
+     
+	 if (pthread_create(dispatcher_t, NULL, dispatcher, NULL) != 0) 
+	{
+			error("ERROR creating dispatcher\n");
+			exit(-1);
+   	}
 	 
 	 while(1){
      	
      	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
      	if (newsockfd < 0) 
           error("ERROR on accept");
+        
+        pthread_mutex_lock(&mux);
         /* Entrada na regiao critica*/
         
-        queue (back, newsockfd);
+        queue (&front ,&back, newsockfd);
         if(fifo_cnt == 1){ /* se fifo_cnt está a '1' então antes estava a zero */
         	/* Sinal para dispatcher */
+        	pthread_kill(*dispatcher_t, SIGUSR1);
         }
         /* Saida da regiao critica*/
+        pthread_mutex_unlock(&mux);
         
      }
      close(sockfd);

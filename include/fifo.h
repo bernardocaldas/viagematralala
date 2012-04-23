@@ -5,7 +5,7 @@ typedef struct s_node{
 	struct s_node * next;
 }fifo_node;
 
-void create_fifo(fifo_node * front, fifo_node * back);
-fifo_node * dequeue(fifo_node * front);
-fifo_node * queue (fifo_node * back, int socket);
+void create_fifo(fifo_node ** front, fifo_node ** back);
+fifo_node * dequeue(fifo_node ** front);
+fifo_node * queue (fifo_node ** front, fifo_node ** back, int socket);
 
