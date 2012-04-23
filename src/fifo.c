@@ -17,10 +17,11 @@ fifo_node * dequeue(fifo_node ** front,fifo_node ** back) {
 	{
 		*back=NULL;
 	}
+	printf("Tirei da queue o aux no. %X\n", (int)aux);
 	return aux;
 }
 
-fifo_node * queue (fifo_node ** front, fifo_node ** back, int socket) {
+void queue (fifo_node ** front, fifo_node ** back, int socket) {
 	fifo_node * new;
 	new = (fifo_node*) malloc(sizeof(fifo_node));
 	new->socket = socket;
@@ -32,4 +33,5 @@ fifo_node * queue (fifo_node ** front, fifo_node ** back, int socket) {
 		(*back)->next = new;
 	*back = new;
 	fifo_cnt ++;
+	printf("Pus na queue o new no. %X\n", (int)new);
 }

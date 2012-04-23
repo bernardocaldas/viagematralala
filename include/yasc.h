@@ -7,10 +7,5 @@
 #include <string.h>
 
 
-typedef struct s_targ {
-
-	int socket;
-
-}targ;
 
 void * yasc (void * arg);

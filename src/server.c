@@ -18,12 +18,12 @@ ctrl+D in client kills the server also
 #include "fifo.h"
 #include "pool.h"
 
-#define POOL_NO 5
+
+#define POOL_NO 1
 
 
 fifo_node * front;
 fifo_node * back;
-
 pthread_mutex_t mux;
 
 sigset_t  set;
@@ -40,39 +40,42 @@ void tratamento (int sigNumb){
 
 void * dispatcher (){
 	fifo_node * current;
+	pool_node * free_node;
 	pthread_t * threads;
 	int i;
 	int * sig;
+	pool_node * first_pool_node = create_pool();
+	
+	/*SEMAPHORE*/
+	sem_init(&sem_pool,0,POOL_NO);
 	
 	/* SIGNALS */
-    	signal(SIGUSR1, tratamento);
-	threads = (pthread_t *) malloc (POOL_NO*sizeof(pthread_t));
+    signal(SIGUSR1, tratamento);
 
-	/* INDEPENDENTE */ 
-	/*
-	for(i=0; i< POOL_NO; i++){
-		if (pthread_create(&threads[i], NULL, yasc, NULL) != 0) 
-		{
-			error("ERROR creating thread\n");
-			exit(-1);
-		}
-	}*/
 	
+	for(i=0; i< POOL_NO; i++){
+		create_pool_node(&first_pool_node);		
+	}
 	
 	while (1){
 		if(fifo_cnt == 0)
 			pause();
 			printf("Tratei o sinal\n");
 		/* servidor acorda-o*/
+		pthread_mutex_lock(&mux);
 		/* Entrada Regiao Critica */
 		current = dequeue(&front,&back);
-		pause();
 		/* Saida Regiao Critica */
-		if(free_cnt==0); /* free_cnt implica que cada thread actualize este contador; regiao critica no final do yasc */
-			pause(); /* garantir que servidor não acorda este sinal; controlado pelas threads*/		
+		pthread_mutex_unlock(&mux);
+		/*SEMAFORO*/
+		sem_wait(&sem_pool);
+		sleep(1);
 		/* Distribuição para a lista */	
-		
 		/* função que procura na lista a primeira thread livre. Vai encontrar uma thread livre (dada a condiçao anterior) e colocará no campo int * socket a informação relativa ao novo file descriptor. Em seguida envia um sinal para que a thread acorde */
+			free_node = first_free(first_pool_node);
+			free_node->socket = current->socket;
+			free_node->status = 1;
+			pthread_kill(*(free_node->thread), SIGUSR1);
 
 	}
 }
@@ -134,7 +137,7 @@ int main(int argc, char *argv[])
         queue (&front ,&back, newsockfd);
         if(fifo_cnt == 1){ /* se fifo_cnt está a '1' então antes estava a zero */
         	/* Sinal para dispatcher */
-        	/*pthread_kill(*dispatcher_t, SIGUSR1);*/
+        	pthread_kill(*dispatcher_t, SIGUSR1);
         }
         /* Saida da regiao critica*/
         pthread_mutex_unlock(&mux);
