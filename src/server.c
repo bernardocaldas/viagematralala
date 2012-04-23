@@ -41,12 +41,11 @@ void tratamento (int sigNumb){
 void * dispatcher (){
 	fifo_node * current;
 	pthread_t * threads;
-	int i, *sig;
+	int i;
+	int * sig;
 	
 	/* SIGNALS */
-    signal(SIGUSR1, tratamento);
-    sigemptyset(&set);
-	sigaddset(&set, SIGUSR1);
+    	signal(SIGUSR1, tratamento);
 	threads = (pthread_t *) malloc (POOL_NO*sizeof(pthread_t));
 
 	/* INDEPENDENTE */ 
@@ -57,18 +56,19 @@ void * dispatcher (){
 			error("ERROR creating thread\n");
 			exit(-1);
 		}
-	}
-	*/
+	}*/
+	
 	
 	while (1){
 		if(fifo_cnt == 0)
-			sigwait(&set, sig);
+			pause();
 			printf("Tratei o sinal\n");
 		/* servidor acorda-o*/
 		/* Entrada Regiao Critica */
-		current = dequeue(&front);
+		current = dequeue(&front,&back);
+		pause();
 		/* Saida Regiao Critica */
-		if(free_cnt==0) /* free_cnt implica que cada thread actualize este contador; regiao critica no final do yasc */
+		if(free_cnt==0); /* free_cnt implica que cada thread actualize este contador; regiao critica no final do yasc */
 			pause(); /* garantir que servidor não acorda este sinal; controlado pelas threads*/		
 		/* Distribuição para a lista */	
 		
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
         queue (&front ,&back, newsockfd);
         if(fifo_cnt == 1){ /* se fifo_cnt está a '1' então antes estava a zero */
         	/* Sinal para dispatcher */
-        	pthread_kill(*dispatcher_t, SIGUSR1);
+        	/*pthread_kill(*dispatcher_t, SIGUSR1);*/
         }
         /* Saida da regiao critica*/
         pthread_mutex_unlock(&mux);

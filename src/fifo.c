@@ -8,11 +8,15 @@ void create_fifo(fifo_node ** front, fifo_node ** back){
 	fifo_cnt = 0;
 }
 
-fifo_node * dequeue(fifo_node ** front) {
+fifo_node * dequeue(fifo_node ** front,fifo_node ** back) {
 	fifo_node * aux;
 	aux = *front;
 	*front = aux->next; 
 	fifo_cnt--;
+	if(*front==NULL)
+	{
+		*back=NULL;
+	}
 	return aux;
 }
 
@@ -23,9 +27,9 @@ fifo_node * queue (fifo_node ** front, fifo_node ** back, int socket) {
 	new->next = NULL;
 	if(*back == NULL){
 		*front = new;
-		*back = new;
 	}
 	else
 		(*back)->next = new;
+	*back = new;
 	fifo_cnt ++;
 }
