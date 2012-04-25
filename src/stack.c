@@ -4,7 +4,7 @@
 
 
 /*
-TODO: convergir EmptyStack com DepthStack
+TODO: não faltam operações de Free no POP?
 */
 Stack * CreateStack()
 {
@@ -31,6 +31,7 @@ int PopStack(Stack ** top)
 	return temp->num;
 }
 
+/*
 int EmptyStack(Stack ** top)
 {
 	Stack * temp =(*top);
@@ -40,10 +41,11 @@ int EmptyStack(Stack ** top)
 		return 1;
 	}
 }
+*/
 
 int DepthStack(Stack ** top)
 {
-	if(EmptyStack(top)==0)
+	if(*top==NULL)
 		return 0;
 	else
 	return (*top)->count;	
@@ -56,6 +58,7 @@ void FreeStack (Stack ** top){
 		free(aux);
 		aux = aux->next;
 	}
+	(*top) = NULL;
 
 }
 

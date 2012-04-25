@@ -1,10 +1,10 @@
 /*Author: Allmighty Internet
 
-Arguments: (local)host, port number (usually 2000+ & it must be the same as the server) ;
+Arguments: (local)host, port number (usually 2000+ & it must be the same as the server) filename (pre-written orders) ;
 
-Description: please run 'server' first; creates the socket and binds it with the proper address; forking so that cliente_son can write and cliente_father can read - their work is completely independent;
+Description: please run 'server' first; creates the socket and binds it with the proper address; 
 
-Problems: makefile can't use all flags - errors concerning the existence of some fields in struch hostent; the work done by the cliente_father and cliente_son shouldn't be completely independent - must create a way for them to communicate properly so that only when we are sure that the server got the message will we ask for a new message to be inserted;
+Problems: makefile can't use all flags - errors concerning the existence of some fields in struch hostent; 
 
 */
 
@@ -37,6 +37,7 @@ int main(int argc, char *argv[])
     char * result;
     char buffer[LEN+1];
     char lixo[LEN+1];
+    FILE * file;
     
     tosend = (package*) malloc(sizeof(package));
     torecv = (package*) malloc(sizeof(package));
@@ -59,14 +60,23 @@ int main(int argc, char *argv[])
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
     serv_addr.sin_port = htons(portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-        error("ERROR connecting");
-
-
+        error("ERROR connecting\n");
+	
+	
+	if(argc==4){
+		file = fopen(argv[3], "r");
+		if(file == NULL){
+			perror("ERROR opening file\n");
+			file = stdin;
+		}
+	}else{
+		file = stdin;
+	}
 
 
 	printf("Please enter the message: ");
 	bzero(buffer,LEN+1);
-	while(fgets(buffer,LEN,stdin)!=NULL){
+	while(fgets(buffer,LEN,file)!=NULL){
 		result=strtok((char*)buffer,delims);
 		while (result != NULL){
 			/*printf("result = %s\n", result);*/
@@ -109,5 +119,9 @@ int main(int argc, char *argv[])
     	
     }
     close(sockfd);
+    /* CLEANING */
+    free(server);
+    free(tosend);
+    free(torecv);
     return 0;
 }

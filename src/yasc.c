@@ -17,7 +17,7 @@ void * yasc (void * arg)
 {	
 	Stack * stack = CreateStack();
 	char ctemp, csend;
-	int itemp,opA,opB,opResult, top, nsend;
+	int itemp,opA,opB,opResult, top, nsend, depth;
 	char * result;
 	char delims[2]={' ',';'};
 	char buffer[256];
@@ -62,13 +62,14 @@ void * yasc (void * arg)
 		{
 			/* Esta operação é realizada para que não se repitam as verificações relativas à pilha vazia e à presença de um único operando; solução mais elegante precisa-se*/
 			if(ctemp=='+' || ctemp=='-' || ctemp=='/'||ctemp=='%'||ctemp=='*'){
-			if(EmptyStack(&stack) == 0)
+			depth = DepthStack(&stack);
+			if(depth == 0)
 			{
 				printf("Pilha vazia: Operação inválida\n");
 				csend = 'E';
 			}
 			else{
-				if(DepthStack(&stack)==1){
+				if(depth==1){
 					printf("Apenas um elemento: Operação inválida\n");
 					csend = 'E';
 				}
@@ -135,10 +136,7 @@ void * yasc (void * arg)
 			
 				switch(ctemp){
 					case 'I':
-						if(EmptyStack(&stack)!=0){
-						while(stack!=NULL)
-							PopStack(&stack);
-						}
+						FreeStack(&stack);
 						printf("A pilha está agora vazia\n");
 						break;
 					case 'D':
@@ -146,12 +144,13 @@ void * yasc (void * arg)
 						PushStack(&stack, itemp);
 						break;
 					case 'P':
-						if(EmptyStack(&stack) == 0){
+						depth = DepthStack(&stack);
+						if(depth == 0){
 							printf("A pilha está vazia\n");
 							csend = 'E';
 						}else{
-							nsend = DepthStack(&stack);
-							printf("A pilha tem %d elementos\n", nsend);
+							nsend = depth;
+							printf("A pilha tem %d elemento(s)\n", nsend);
 						}
 						break;
 					case 'R':

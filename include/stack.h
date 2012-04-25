@@ -13,6 +13,5 @@ Stack * CreateStack();
 void PushStack(Stack **, int);
 int PopStack(Stack **);
 int DepthStack(Stack ** );
-int EmptyStack(Stack **);
 void FreeStack (Stack ** );
 #endif
