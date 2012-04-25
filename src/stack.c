@@ -2,34 +2,38 @@
 #include <stdlib.h>
 #include <stack.h>
 
+
+/*
+TODO: convergir EmptyStack com DepthStack
+*/
 Stack * CreateStack()
 {
 	return NULL;
 }
 
-void PushStack(Stack ** inicio, int num)
+void PushStack(Stack ** top, int num)
 {
 	Stack * novo = malloc(sizeof(Stack));
-	if(*inicio==NULL){
+	if(*top==NULL){
 		novo->count=1;
 	}else{
-		novo->count=(*inicio)->count+1;
+		novo->count=(*top)->count+1;
 	}
 	novo->num=num;
-	novo->next=(*inicio);
-	(*inicio)=novo;
+	novo->next=(*top);
+	(*top)=novo;
 }
 
-int PopStack(Stack ** inicio)
+int PopStack(Stack ** top)
 {
-	Stack * temp= (*inicio);
-	(*inicio)=(*inicio)->next;
+	Stack * temp= (*top);
+	(*top)=(*top)->next;
 	return temp->num;
 }
 
-int EmptyStack(Stack ** inicio)
+int EmptyStack(Stack ** top)
 {
-	Stack * temp =(*inicio);
+	Stack * temp =(*top);
 	if(temp == NULL){
 		return 0;
 	}else{
@@ -37,12 +41,22 @@ int EmptyStack(Stack ** inicio)
 	}
 }
 
-int DepthStack(Stack ** inicio)
+int DepthStack(Stack ** top)
 {
-	if(EmptyStack(inicio)==0)
+	if(EmptyStack(top)==0)
 		return 0;
 	else
-	return (*inicio)->count;	
+	return (*top)->count;	
+}
+
+void FreeStack (Stack ** top){
+	Stack * aux;
+	aux = (*top);
+	while(aux!=NULL){
+		free(aux);
+		aux = aux->next;
+	}
+
 }
 
 

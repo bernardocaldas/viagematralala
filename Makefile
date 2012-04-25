@@ -10,10 +10,10 @@ BIBS = -lpthread
 
 all:  server cliente
 
-server: server.o yasc.o stack.o fifo.o
-	$(CC) $(CFLAGS) -g -o bin/server obj/server.o obj/yasc.o obj/stack.o obj/fifo.o $(BIBS)
+server: server.o yasc.o stack.o fifo.o pool.o
+	$(CC) $(CFLAGS) -g -o bin/server obj/server.o obj/yasc.o obj/stack.o obj/fifo.o obj/pool.o $(BIBS)
 	
-server.o: server.c yasc.h
+server.o: server.c yasc.h pool.h
 	$(CC) $(CFLAGS) -g -o obj/server.o -I include/ -c src/server.c 
 
 cliente: cliente.o
@@ -22,7 +22,7 @@ cliente: cliente.o
 cliente.o: cliente.c protocol.h
 	$(CC) $(CFLAGS) -g -o obj/cliente.o -I include/ -c src/cliente.c
 	
-yasc.o: yasc.c stack.h yasc.h protocol.h
+yasc.o: yasc.c stack.h yasc.h protocol.h pool.h
 	$(CC) $(CFLAGS) -g -o obj/yasc.o -I include/ -c src/yasc.c
 
 stack.o: stack.c stack.h
@@ -30,6 +30,9 @@ stack.o: stack.c stack.h
 
 fifo.o: fifo.c fifo.h
 	$(CC) $(CFLAGS) -g -o obj/fifo.o -I include/ -c src/fifo.c
+
+pool.o: pool.c pool.h yasc.h
+	$(CC) $(CFLAGS) -g -o obj/pool.o -I include/ -c src/pool.c
 	
 
 
@@ -38,5 +41,6 @@ clean:
 	rm bin/*
 	rm src/*.c~
 	rm include/*.h~
+	rm Makefile~
 
 

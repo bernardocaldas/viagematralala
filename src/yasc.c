@@ -8,6 +8,7 @@ A função de que consiste o programa é invocada por server.c para servir como 
 #include "yasc.h"
 #include "protocol.h"
 #include "pool.h"
+#include "fifo.h"
 
 #define MAXLINHA 20
 
@@ -22,32 +23,35 @@ void * yasc (void * arg)
 	char buffer[256];
 	char msg[256];
     int newsockfd, n;
-    int * status;
+
     package * torecv, *tosend;
-    pool_node * argument;
+    fifo_node * current;
     
     while(1){
     
-		pause();
+		sem_wait(&sem_fifo);
+		
+		pthread_mutex_lock(&mux);
+		/* Entrada Regiao Critica */
+		current = dequeue(&front,&back);
+		/* Saida Regiao Critica */
+		pthread_mutex_unlock(&mux);
+		/*SEMAFORO*/
+		/* Distribuição para a lista */
+		/* função que procura na lista a primeira thread livre. Vai encontrar uma thread livre (dada a condiçao anterior) e colocará no campo int * socket a informação relativa ao novo file descriptor. Em seguida envia um sinal para que a thread acorde */
+		
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
-		status =(int*)malloc(1*sizeof(int));
-		argument = (pool_node*) arg;
-		newsockfd = argument->socket;
+
+		newsockfd = current->socket;
 	
 		/* leitura e resposta inicial*/
 		n = read(newsockfd,torecv,sizeof(package));
-		if (n < 0){
-			error("ERROR reading from socket");
-			exit(-1);
+		if (n <= 0){
+			perror("ERROR reading from socket");
+			goto out;
 		}
-		/*strcpy(msg, "Message Received\n");
-		n = write(newsockfd, msg, 255);
-		if (n < 0){
-			error("ERROR writing to socket");
-			exit(-2);
-		}*/
 	
 		ctemp = torecv->op;
 		itemp = ntohl(torecv->data);
@@ -161,7 +165,7 @@ void * yasc (void * arg)
 						}	
 						break;						
 					case 'T':
-						if(EmptyStack(&stack) == 0){
+						if(DepthStack(&stack) == 0){
 							printf("A pilha está vazia\n");
 							csend = 'E';
 						}
@@ -187,14 +191,14 @@ void * yasc (void * arg)
 		tosend->op = csend;
 		n = write(newsockfd, tosend, sizeof(package));
 		if (n < 0) {
-			error("ERROR writing to socket");
-			exit(-1);
+			perror("ERROR writing to socket");
+			goto out;
 		}
 
 		n = read(newsockfd,torecv,sizeof(package));
-		if (n < 0) {
-			error("ERROR reading from socket");
-			exit(-1);
+		if (n <= 0) {
+			perror("ERROR reading from socket");
+			goto out;
 		}
 		ctemp = torecv->op;
 		itemp = ntohl(torecv->data);
@@ -202,10 +206,10 @@ void * yasc (void * arg)
 		nsend = 0;
 	}
 	
-	
+	out:
 		printf("Thread vai fechar o seu socket\n");
 		close(newsockfd);
-		argument->status = 0; 
-		sem_post(&sem_pool);
+		/* CLEANING */
+		FreeStack(&stack);
 	}
 }

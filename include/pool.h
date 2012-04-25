@@ -1,6 +1,3 @@
-#include <semaphore.h>
-
-sem_t sem_pool;
 int free_cnt;
 
 typedef struct s_pool{

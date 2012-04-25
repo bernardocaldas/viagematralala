@@ -5,14 +5,12 @@
 void create_fifo(fifo_node ** front, fifo_node ** back){
 	*front = NULL;
 	*back = NULL;
-	fifo_cnt = 0;
 }
 
 fifo_node * dequeue(fifo_node ** front,fifo_node ** back) {
 	fifo_node * aux;
 	aux = *front;
 	*front = aux->next; 
-	fifo_cnt--;
 	if(*front==NULL)
 	{
 		*back=NULL;
@@ -32,6 +30,5 @@ void queue (fifo_node ** front, fifo_node ** back, int socket) {
 	else
 		(*back)->next = new;
 	*back = new;
-	fifo_cnt ++;
 	printf("Pus na queue o new no. %X\n", (int)new);
 }
