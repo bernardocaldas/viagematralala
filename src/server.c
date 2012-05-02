@@ -17,6 +17,7 @@ ctrl+D in client kills the server also
 #include "yasc.h"
 #include "fifo.h"
 #include "pool.h"
+#include "protocol.h"
 
 
 #define POOL_NO 1
@@ -33,6 +34,28 @@ void error(const char *msg)
 
 void tratamento (int sigNumb){
 	
+}
+
+void * servadmin (){
+	char buffer[LEN],lixo[LEN],ctemp;
+	bzero(buffer,LEN+1);
+	printf("Insert command: \n");
+	while(fgets(buffer,LEN,stdin)!=NULL){
+	if(sscanf(buffer, "%c%s", &ctemp, lixo)==1){
+		if(ctemp=='M'){
+		}
+		else if(ctemp=='F'){
+		pthread_kill);
+		}
+		else{
+		printf("Escreva comandos válidos\n");
+		}
+	} 
+	else{
+		printf("Escreva comandos válidos\n");
+	}
+	printf("Insert command: \n");
+	}
 }
 
 void threadpool (){
@@ -55,9 +78,9 @@ int main(int argc, char *argv[])
 /* FIFO */
 	create_fifo(&front, &back);
 
-/* THREADS */
-	pthread_t * dispatcher_t;
-	dispatcher_t = (pthread_t *) malloc (1*sizeof(pthread_t));
+/* SERVADMIN */
+	pthread_t * servadmin_t;
+	servadmin_t = (pthread_t *) malloc (1*sizeof(pthread_t));
 
 /* SOCKETS */
      int sockfd, newsockfd, portno;
@@ -83,7 +106,8 @@ int main(int argc, char *argv[])
      listen(sockfd,5); /* 5 means???*/
      clilen = sizeof(cli_addr);
      
-	 threadpool(); /* creates threadpool */
+	pthread_create(servadmin_t, NULL, servadmin, NULL);
+	threadpool(); /* creates threadpool */
 	 
 	 sem_init(&sem_fifo, 0, 0);
 	 
