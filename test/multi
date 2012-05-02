@@ -1,0 +1,6 @@
+#!/bin/bash
+make
+for i in {1..1000}
+do
+	  ./bin/cliente localhost 2000 txt/ordens1.txt
+done
