@@ -33,7 +33,7 @@ void error(const char *msg)
 }
 
 void tratamento (int sigNumb){
-	
+	printf("ooolhe, vamos acabar com isto, está bem?\n");
 }
 
 void * servadmin (){
@@ -43,9 +43,10 @@ void * servadmin (){
 	while(fgets(buffer,LEN,stdin)!=NULL){
 	if(sscanf(buffer, "%c%s", &ctemp, lixo)==1){
 		if(ctemp=='M'){
+		
 		}
 		else if(ctemp=='F'){
-		pthread_kill);
+		raise(SIGUSR1);
 		}
 		else{
 		printf("Escreva comandos válidos\n");
@@ -75,6 +76,9 @@ int main(int argc, char *argv[])
 /* MUTEX */
 	pthread_mutex_init(&mux, NULL);
 
+/*SIGNALS*/
+	signal(SIGUSR1,tratamento);
+	
 /* FIFO */
 	create_fifo(&front, &back);
 

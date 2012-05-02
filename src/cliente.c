@@ -120,6 +120,7 @@ int main(int argc, char *argv[])
     }
     close(sockfd);
     /* CLEANING */
+    fclose(file);
     free(server);
     free(tosend);
     free(torecv);
