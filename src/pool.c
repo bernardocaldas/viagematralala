@@ -11,8 +11,8 @@ void create_pool_node(pool_node ** first){
 	new = (pool_node *) malloc (sizeof(pool_node));
 	new->thread = (pthread_t*) malloc (sizeof(pthread_t));
 	pthread_create(new->thread, NULL, yasc, (void*)new);
-	new->socket = 0;
 	aux = *first;
+	new->time = 0;
 	new->next = NULL;
 	if(aux!= NULL){
 		while(aux->next != NULL){ 

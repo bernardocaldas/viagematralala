@@ -23,23 +23,28 @@ void * yasc (void * arg)
 	char buffer[256];
 	char msg[256];
     int newsockfd, n;
+    int time_begin, time_end;
 
     package * torecv, *tosend;
     fifo_node * current;
+    pool_node * self;
+    
+    self = (pool_node *)malloc(1*sizeof(pool_node));
+    self = (pool_node *)arg;
     
     while(1){
-    
+    	
+    	self->time = time_end-time_begin;
 		sem_wait(&sem_fifo);
 		
 		pthread_mutex_lock(&mux);
 		/* Entrada Regiao Critica */
 		current = dequeue(&front,&back);
+		fifo_count--;
 		/* Saida Regiao Critica */
 		pthread_mutex_unlock(&mux);
-		/*SEMAFORO*/
-		/* Distribuição para a lista */
-		/* função que procura na lista a primeira thread livre. Vai encontrar uma thread livre (dada a condiçao anterior) e colocará no campo int * socket a informação relativa ao novo file descriptor. Em seguida envia um sinal para que a thread acorde */
-		
+
+		time_begin = time();
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
@@ -214,5 +219,6 @@ void * yasc (void * arg)
 		close(newsockfd);
 		/* CLEANING */
 		FreeStack(&stack);
+		time_end = time();
 	}
 }

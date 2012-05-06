@@ -1,5 +1,8 @@
 /* 
-Author: Allmighty Internet
+Authors: 
+
+67557 Bernardo Caldas
+67636 João Silva
 
 Description: A simple server in the internet domain using STREAM
 The port number is passed as an argument; 
@@ -7,7 +10,9 @@ unilateral communication;
 each time a request is made a thread is created to deal with it;
 
 Problems: makefile does not work with all the previous flags;
-ctrl+D in client kills the server also
+the accept command creates a new socket even when the maximum FIFO size is met
+solution: accept all sockets the way we are doing but write TRUE or FALSE whether
+the FIFO is full or not so that the client can try connecting again or not;
 */
 #include <time.h>
 #include <sys/socket.h>
@@ -20,8 +25,6 @@ ctrl+D in client kills the server also
 #include "protocol.h"
 
 
-#define POOL_NO 10
-
 sigset_t  set;
 
 /* CUIDADO COM ESTA FUNCAO!!!*/
@@ -32,7 +35,7 @@ void error(const char *msg)
 }
 
 void tratamento (int sigNumb){
-	printf("ooolhe, vamos acabar com isto, está bem?\n");
+	printf("Signal received\n");
 }
 
 void * servadmin (){
@@ -61,7 +64,7 @@ void * servadmin (){
 void threadpool (){
 
 	int i;
-	pool_node * first_pool_node = create_pool();
+	first_pool_node = create_pool();
 	
 	for(i=0; i< POOL_NO; i++){
 		create_pool_node(&first_pool_node);		
@@ -106,7 +109,7 @@ int main(int argc, char *argv[])
      if (bind(sockfd, (struct sockaddr *) &serv_addr,
               sizeof(serv_addr)) < 0) 
               error("ERROR on binding");
-     listen(sockfd,1000); /* 5 means???*/
+     listen(sockfd,1000); /* 1000 means???*/
      clilen = sizeof(cli_addr);
      
 	pthread_create(servadmin_t, NULL, servadmin, NULL);
@@ -115,18 +118,20 @@ int main(int argc, char *argv[])
 	 sem_init(&sem_fifo, 0, 0);
 	 
 	 while(1){
-     	
      	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
      	if (newsockfd < 0) 
           error("ERROR on accept");
-        
         pthread_mutex_lock(&mux);
         /* Entering Critical Region*/
+        if (fifo_count == FIFO_MAX){
+        	printf("ERROR on accept. Too many requests. Please try again later\n");
+        }else{
         queue (&front ,&back, newsockfd);
         sem_post(&sem_fifo);
+        fifo_count++;
+        }
         /* Exiting Critical Region*/
         pthread_mutex_unlock(&mux);
-        
      }
      close(sockfd);
      return 0; 

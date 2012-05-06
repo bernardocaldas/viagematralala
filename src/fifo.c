@@ -23,6 +23,7 @@ void queue (fifo_node ** front, fifo_node ** back, int socket) {
 	fifo_node * new;
 	new = (fifo_node*) malloc(sizeof(fifo_node));
 	new->socket = socket;
+	new->time = time();
 	new->next = NULL;
 	if(*back == NULL){
 		*front = new;

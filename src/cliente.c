@@ -8,6 +8,8 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 
 */
 
+/* TODO : funciona com IP e com hostname!??!?*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -19,6 +21,7 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <netdb.h> 
 #include "protocol.h"
 
+#define MAX_CONNECT 5
 
 void error(const char *msg)
 {
@@ -40,6 +43,7 @@ int main(int argc, char *argv[])
     char lixo[LEN+1];
     FILE * file;
     int debug = 0;
+    int connect_cnt;
     
     tosend = (package*) malloc(sizeof(package));
     torecv = (package*) malloc(sizeof(package));
@@ -61,9 +65,21 @@ int main(int argc, char *argv[])
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
     serv_addr.sin_port = htons(portno);
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) 
-        error("ERROR connecting\n");
-	
+    
+    for (connect_count = 0; connect_count<MAX_CONNECT; connect_count++){
+    	aux_connect=connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
+    	if (aux_connect == 0)
+    		fprintf("Connection sucessful!\n");
+    		break;
+        else
+        	perror("ERROR connecting\n");
+        	sleep(2);
+    }
+    
+    if(aux_connect != 0){
+    	fprintf("ERROR Maximum connecting attempts exceeded\n");
+    	exit(-1)
+   	}
 	
 	if(argc==4){
 		file = fopen(argv[3], "r");
