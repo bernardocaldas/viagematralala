@@ -174,6 +174,10 @@ void * yasc (void * arg)
 							PushStack(&stack, nsend);
 						}
 						break;
+					case 'G':
+						csend = 'V';
+						nsend = 0;
+						break;
 					default:
 						printf("Caracter sem função atribuída. Introduza um caracter válido\n");
 						csend = 'E';

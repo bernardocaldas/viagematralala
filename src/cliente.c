@@ -19,6 +19,7 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <netdb.h> 
 #include "protocol.h"
 
+
 void error(const char *msg)
 {
     perror(msg);
@@ -38,6 +39,7 @@ int main(int argc, char *argv[])
     char buffer[LEN+1];
     char lixo[LEN+1];
     FILE * file;
+    int debug = 0;
     
     tosend = (package*) malloc(sizeof(package));
     torecv = (package*) malloc(sizeof(package));
@@ -74,7 +76,6 @@ int main(int argc, char *argv[])
 	}
 
 
-	printf("Please enter the message: ");
 	bzero(buffer,LEN+1);
 	while(fgets(buffer,LEN,file)!=NULL){
 		result=strtok((char*)buffer,delims);
@@ -82,18 +83,20 @@ int main(int argc, char *argv[])
 			/*printf("result = %s\n", result);*/
 			/* ENVIO DE CARACTER*/
 			if(sscanf(result, "%d%s", &ntemp, lixo)==1){
-				printf("Achei um inteiro %d\n", ntemp);
 				tosend->data = htonl(ntemp);
 				tosend->op = 'D';
 			} else {
 				/*ENVIO DE INTEIRO*/
 				if(sscanf(result, "%c%s", &ctemp, lixo)==1){
-				printf("Achei um caracter %c\n", ctemp);
-				tosend->data = htonl(0);
-				tosend->op = ctemp;	
+				if(ctemp == 'G')
+					debug = !debug;
+				if(ctemp == 'D') /* O caracter 'D' não deve ser introduzido pelo utilizador*/
+					ctemp = 'E'; 
+					tosend->data = htonl(0);
+					tosend->op = ctemp;	
 				} else {
-				printf("Escreva comandos válidos\n");
-				break;
+				/* TODO cliente deve enviar para servidor tudo o que lhe aparece à frente ou deverá existir um sort à partida? */
+					break;
 				}
 			}
 			
@@ -103,18 +106,23 @@ int main(int argc, char *argv[])
 			  error("ERROR writing to socket");
 		
 			if(ctemp == 'K' ){
-				printf("Cliente terminou\n");
+				printf("Client closing\n");
 				exit(0);
 			}			  
 		
 			n = read(sockfd,torecv,sizeof(package));
 			if(n<0)
 			  error("ERROR reading from socket");
-			printf("Message from abroad:%c %d\n",torecv->op, ntohl(torecv->data));
+			if (debug == 1){
+				if(tosend->op == 'D')
+					printf("%c%d=>",tosend->op, ntohl(tosend->data));
+				else
+					printf("%c=>", tosend->op);
+				printf("%c %d\n",torecv->op, ntohl(torecv->data));
+			}
 		
 			result = strtok(NULL, delims);
 		}
-		printf("Please enter the message: ");
 		bzero(buffer,256);
     	
     }

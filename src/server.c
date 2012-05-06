@@ -9,7 +9,7 @@ each time a request is made a thread is created to deal with it;
 Problems: makefile does not work with all the previous flags;
 ctrl+D in client kills the server also
 */
-
+#include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -20,8 +20,7 @@ ctrl+D in client kills the server also
 #include "protocol.h"
 
 
-#define POOL_NO 1
-
+#define POOL_NO 10
 
 sigset_t  set;
 
@@ -107,7 +106,7 @@ int main(int argc, char *argv[])
      if (bind(sockfd, (struct sockaddr *) &serv_addr,
               sizeof(serv_addr)) < 0) 
               error("ERROR on binding");
-     listen(sockfd,5); /* 5 means???*/
+     listen(sockfd,1000); /* 5 means???*/
      clilen = sizeof(cli_addr);
      
 	pthread_create(servadmin_t, NULL, servadmin, NULL);
@@ -122,10 +121,10 @@ int main(int argc, char *argv[])
           error("ERROR on accept");
         
         pthread_mutex_lock(&mux);
-        /* Entrada na regiao critica*/
+        /* Entering Critical Region*/
         queue (&front ,&back, newsockfd);
         sem_post(&sem_fifo);
-        /* Saida da regiao critica*/
+        /* Exiting Critical Region*/
         pthread_mutex_unlock(&mux);
         
      }
