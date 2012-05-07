@@ -14,6 +14,7 @@ void create_pool_node(pool_node ** first){
 	aux = *first;
 	new->time = 0;
 	new->next = NULL;
+	new->socket = 0;
 	if(aux!= NULL){
 		while(aux->next != NULL){ 
 			aux=aux->next;

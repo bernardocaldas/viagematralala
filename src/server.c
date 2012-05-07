@@ -27,12 +27,7 @@ the FIFO is full or not so that the client can try connecting again or not;
 
 sigset_t  set;
 
-/* CUIDADO COM ESTA FUNCAO!!!*/
-void error(const char *msg)
-{
-    perror(msg);
-    exit(1);
-}
+
 
 void tratamento (int sigNumb){
 	printf("Signal received\n");
@@ -120,13 +115,13 @@ int main(int argc, char *argv[])
 	 sem_init(&sem_fifo_free, 0, FIFO_MAX); 
 	 
 	 while(1){
+	 	sem_wait(&sem_fifo_free);
      	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
      	if (newsockfd < 0) 
-          error("ERROR on accept");
+          perror("ERROR on accept");
         pthread_mutex_lock(&mux);
         /* Entering Critical Region*/
 
-		sem_wait(&sem_fifo_free);
 	    queue (&front ,&back, newsockfd);
 	    sem_post(&sem_fifo_used);
         

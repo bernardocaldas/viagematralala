@@ -25,12 +25,6 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 
 #define MAX_CONNECT 5
 
-void error(const char *msg)
-{
-    perror(msg);
-    exit(0);
-}
-
 int main(int argc, char *argv[])
 {
     int sockfd, portno, n, ntemp,aux;

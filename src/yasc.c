@@ -31,6 +31,7 @@ void * yasc (void * arg)
     self = (pool_node *)malloc(1*sizeof(pool_node));
     self = (pool_node *)arg;
     
+    time_begin = 0;
    
     
     while(1){
@@ -44,7 +45,7 @@ void * yasc (void * arg)
 		sem_post(&sem_fifo_free);
 		/* Saida Regiao Critica */
 		pthread_mutex_unlock(&mux);
-
+		self->socket = newsockfd;
 		time_begin = time(NULL);
 		
 		torecv = (package*) malloc(sizeof(package));

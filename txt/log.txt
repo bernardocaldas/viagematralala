@@ -3,3 +3,4 @@ log
 jojo:
 - algumas mudanças no que toca `gestão de memória; funções relativas às estruturas de dados é que tratam da libertação de memória dessas mesmas estruturas;
 - a comunicação tem que ser inicializada por 'I'; ciclo while em yasc à espera que venha uma inicialização da pilha;
+- inserção de um contador associado ao FIFO de modo a fechar o socket;

@@ -18,6 +18,7 @@ pthread_mutex_t mux;
 fifo_node * front;
 fifo_node * back;
 
+
 void create_fifo(fifo_node ** front, fifo_node ** back);
 int dequeue(fifo_node ** front, fifo_node ** back);
 void queue (fifo_node ** front, fifo_node ** back, int socket);

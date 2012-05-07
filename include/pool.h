@@ -1,7 +1,7 @@
 #ifndef POOL_H
 #define POOL_H
 
-#define POOL_INIT 10
+#define POOL_INIT 1
 #define MIN_POOL 10
 #define MAX_POOL 20
 
@@ -12,6 +12,7 @@ typedef struct s_pool{
 	pthread_t * thread;
 	struct s_pool * next;
 	int time;
+	int socket;
 }pool_node;
 
 pool_node * first_pool_node;
