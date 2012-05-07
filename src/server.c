@@ -64,9 +64,10 @@ void * servadmin (){
 void threadpool (){
 
 	int i;
+	pool_no = POOL_INIT;
 	first_pool_node = create_pool();
 	
-	for(i=0; i< POOL_NO; i++){
+	for(i=0; i< pool_no; i++){
 		create_pool_node(&first_pool_node);		
 	}
 	
@@ -115,7 +116,8 @@ int main(int argc, char *argv[])
 	pthread_create(servadmin_t, NULL, servadmin, NULL);
 	threadpool(); /* creates threadpool */
 	 
-	 sem_init(&sem_fifo, 0, 0);
+	 sem_init(&sem_fifo_used, 0, 0);
+	 sem_init(&sem_fifo_free, 0, FIFO_MAX); 
 	 
 	 while(1){
      	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
@@ -123,13 +125,11 @@ int main(int argc, char *argv[])
           error("ERROR on accept");
         pthread_mutex_lock(&mux);
         /* Entering Critical Region*/
-        if (fifo_count == FIFO_MAX){
-        	printf("ERROR on accept. Too many requests. Please try again later\n");
-        }else{
-        queue (&front ,&back, newsockfd);
-        sem_post(&sem_fifo);
-        fifo_count++;
-        }
+
+		sem_wait(&sem_fifo_free);
+	    queue (&front ,&back, newsockfd);
+	    sem_post(&sem_fifo_used);
+        
         /* Exiting Critical Region*/
         pthread_mutex_unlock(&mux);
      }

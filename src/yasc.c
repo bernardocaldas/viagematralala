@@ -15,7 +15,7 @@ A função de que consiste o programa é invocada por server.c para servir como 
 
 void * yasc (void * arg)
 {	
-	Stack * stack = CreateStack();
+	Stack * stack;
 	char ctemp, csend;
 	int itemp,opA,opB,opResult, top, nsend, depth;
 	char * result;
@@ -26,37 +26,50 @@ void * yasc (void * arg)
     int time_begin, time_end;
 
     package * torecv, *tosend;
-    fifo_node * current;
     pool_node * self;
     
     self = (pool_node *)malloc(1*sizeof(pool_node));
     self = (pool_node *)arg;
     
+   
+    
     while(1){
     	
     	self->time = time_end-time_begin;
-		sem_wait(&sem_fifo);
+		sem_wait(&sem_fifo_used);
 		
 		pthread_mutex_lock(&mux);
 		/* Entrada Regiao Critica */
-		current = dequeue(&front,&back);
-		fifo_count--;
+		newsockfd = dequeue(&front,&back);
+		sem_post(&sem_fifo_free);
 		/* Saida Regiao Critica */
 		pthread_mutex_unlock(&mux);
 
-		time_begin = time();
+		time_begin = time(NULL);
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
-
-		newsockfd = current->socket;
 	
 		/* leitura e resposta inicial*/
-		n = read(newsockfd,torecv,sizeof(package));
-		if (n <= 0){
-			perror("ERROR reading from socket");
-			goto out;
+		do{
+			n = read(newsockfd,torecv,sizeof(package));
+			if (n <= 0){
+				perror("ERROR reading from socket");
+				break;
+			}
+			if(torecv->op == 'I')
+				break;
+			else{
+				tosend->data = htonl(0);
+				tosend->op = 'E';
+				n = write(newsockfd, tosend, sizeof(package));
+				if (n < 0) {
+					perror("ERROR writing to socket");
+					break;
+				}
+			}
 		}
+		while(1);
 	
 		ctemp = torecv->op;
 		itemp = ntohl(torecv->data);
@@ -200,13 +213,13 @@ void * yasc (void * arg)
 		n = write(newsockfd, tosend, sizeof(package));
 		if (n < 0) {
 			perror("ERROR writing to socket");
-			goto out;
+			break;
 		}
 
 		n = read(newsockfd,torecv,sizeof(package));
 		if (n <= 0) {
 			perror("ERROR reading from socket");
-			goto out;
+			break;
 		}
 		ctemp = torecv->op;
 		itemp = ntohl(torecv->data);
@@ -219,6 +232,6 @@ void * yasc (void * arg)
 		close(newsockfd);
 		/* CLEANING */
 		FreeStack(&stack);
-		time_end = time();
+		time_end = time(NULL);
 	}
 }

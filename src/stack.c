@@ -26,22 +26,14 @@ void PushStack(Stack ** top, int num)
 
 int PopStack(Stack ** top)
 {
+	int num;
 	Stack * temp= (*top);
 	(*top)=(*top)->next;
-	return temp->num;
+	num = temp->num;
+	free(temp);
+	return num;
 }
 
-/*
-int EmptyStack(Stack ** top)
-{
-	Stack * temp =(*top);
-	if(temp == NULL){
-		return 0;
-	}else{
-		return 1;
-	}
-}
-*/
 
 int DepthStack(Stack ** top)
 {

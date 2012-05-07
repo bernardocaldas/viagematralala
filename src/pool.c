@@ -26,15 +26,11 @@ void create_pool_node(pool_node ** first){
 }
 
 void remove_list(){
-
+/* FAAAAAAALTA!!!!!*/
 
 }
 
-pool_node * first_free(pool_node * first){
-	pool_node * aux;
-	aux = first;
-	while(aux->status != 0){
-		aux = aux->next;
-	}
-	return aux;
+void remove_pool_node(){
+
 }
+
