@@ -32,6 +32,8 @@ void * yasc (void * arg)
     self = (pool_node *)arg;
     
     time_begin = 0;
+    stack=CreateStack();
+    self->stack=&stack;
    
     
     while(1){

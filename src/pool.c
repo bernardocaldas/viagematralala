@@ -1,4 +1,3 @@
-#include "yasc.h"
 #include "pool.h"
 
 pool_node * create_pool(){
@@ -15,6 +14,7 @@ void create_pool_node(pool_node ** first){
 	new->time = 0;
 	new->next = NULL;
 	new->socket = 0;
+	new->stack=NULL;
 	if(aux!= NULL){
 		while(aux->next != NULL){ 
 			aux=aux->next;

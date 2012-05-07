@@ -39,7 +39,8 @@ void display_client_info(){
 		if(aux->socket!=0)
 		{
 			getpeername(aux->socket,(struct sockaddr *)&sockinfo,&addrlen);
-			printf("Cliente com endereço IP %s\n",inet_ntoa(sockinfo.sin_addr));
+			printf("Cliente com endereço IP %s e a pilha tem o conteúdo:",inet_ntoa(sockinfo.sin_addr));
+			PrintStack(aux->stack);
 		}
 		aux=aux->next;
 	}
