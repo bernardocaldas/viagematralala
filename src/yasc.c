@@ -231,6 +231,7 @@ void * yasc (void * arg)
 	out:
 		printf("Thread vai fechar o seu socket\n");
 		close(newsockfd);
+		self->socket=0;
 		/* CLEANING */
 		FreeStack(&stack);
 		time_end = time(NULL);

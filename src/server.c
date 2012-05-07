@@ -17,6 +17,7 @@ the FIFO is full or not so that the client can try connecting again or not;
 #include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <pthread.h>
 #include <signal.h>
 #include "yasc.h"
@@ -27,7 +28,24 @@ the FIFO is full or not so that the client can try connecting again or not;
 
 sigset_t  set;
 
+void display_client_info(){
+	pool_node *aux;
+	aux=first_pool_node;
+	struct sockaddr_in sockinfo;
+	int addrlen;
+	addrlen=sizeof(sockinfo);
+	printf("Info de clientes:\n");
+	while(aux!= NULL){
+		if(aux->socket!=0)
+		{
+			getpeername(aux->socket,(struct sockaddr *)&sockinfo,&addrlen);
+			printf("Cliente com endereço IP %s\n",inet_ntoa(sockinfo.sin_addr));
+		}
+		aux=aux->next;
+	}
 
+
+}
 
 void tratamento (int sigNumb){
 	printf("Signal received\n");
@@ -40,10 +58,11 @@ void * servadmin (){
 	while(fgets(buffer,LEN,stdin)!=NULL){
 	if(sscanf(buffer, "%c%s", &ctemp, lixo)==1){
 		if(ctemp=='M'){
-		
+			display_client_info();
 		}
 		else if(ctemp=='F'){
 		raise(SIGUSR1);
+		/*TEMP*/ exit(1);
 		}
 		else{
 		printf("Escreva comandos válidos\n");
