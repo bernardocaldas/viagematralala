@@ -1,10 +1,15 @@
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include "pool.h"
+#include "yasc.h"
 
 pool_node * create_pool(){
 	return NULL;
 }
 
-void create_pool_node(pool_node ** first){
+void create_pool_node(pool_node ** first, int flag){
+
 	pool_node * new;
 	pool_node * aux;
 	new = (pool_node *) malloc (sizeof(pool_node));
@@ -15,6 +20,7 @@ void create_pool_node(pool_node ** first){
 	new->next = NULL;
 	new->socket = 0;
 	new->stack=NULL;
+	new->flag = flag;
 	if(aux!= NULL){
 		while(aux->next != NULL){ 
 			aux=aux->next;

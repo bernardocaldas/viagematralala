@@ -1,9 +1,12 @@
 #ifndef POOL_H
 #define POOL_H
 
+
+#include "stack.h"
+
 #define POOL_INIT 1
-#define MIN_POOL 10
-#define MAX_POOL 20
+#define MIN_POOL 1
+#define MAX_POOL 3
 
 int pool_no;
 int free_cnt;
@@ -13,13 +16,15 @@ typedef struct s_pool{
 	struct s_pool * next;
 	int time;
 	int socket;
+	int flag;
+	Stack ** stack;
 }pool_node;
 
 pool_node * first_pool_node;
 
 
 void remove_list();
-void create_pool_node(pool_node ** first);
+void create_pool_node(pool_node ** first, int flag);
 pool_node * create_pool();
 void remove_pool_node();
 

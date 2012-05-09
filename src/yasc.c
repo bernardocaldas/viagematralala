@@ -9,8 +9,10 @@ A função de que consiste o programa é invocada por server.c para servir como 
 #include "protocol.h"
 #include "pool.h"
 #include "fifo.h"
+#include <unistd.h>
 
-#define MAXLINHA 20
+#define WAIT_TIME 60
+
 
 
 void * yasc (void * arg)
@@ -23,32 +25,34 @@ void * yasc (void * arg)
 	char buffer[256];
 	char msg[256];
     int newsockfd, n;
-    int time_begin, time_end;
-
     package * torecv, *tosend;
     pool_node * self;
+    struct timespec timer;
+    
     
     self = (pool_node *)malloc(1*sizeof(pool_node));
     self = (pool_node *)arg;
-    
-    time_begin = 0;
-    stack=CreateStack();
-    self->stack=&stack;
    
     
     while(1){
-    	
-    	self->time = time_end-time_begin;
-		sem_wait(&sem_fifo_used);
-		
+    	if(self->flag == 0){
+    		timer.tv_sec = time(NULL)+WAIT_TIME;
+    		timer.tv_nsec = 0;
+			if(sem_timedwait(&sem_fifo_used, &timer)==-1){;
+				printf("Thread will die; sem_out %d\n", n);
+				pthread_exit(NULL);
+			}
+		}else{
+			sem_wait(&sem_fifo_used);
+		}
 		pthread_mutex_lock(&mux);
 		/* Entrada Regiao Critica */
 		newsockfd = dequeue(&front,&back);
 		sem_post(&sem_fifo_free);
+		fifo_count--;
 		/* Saida Regiao Critica */
 		pthread_mutex_unlock(&mux);
 		self->socket = newsockfd;
-		time_begin = time(NULL);
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
@@ -60,8 +64,11 @@ void * yasc (void * arg)
 				perror("ERROR reading from socket");
 				break;
 			}
-			if(torecv->op == 'I')
+			if(torecv->op == 'I'){
+			    stack=CreateStack();
+    			self->stack=&stack;
 				break;
+			}
 			else{
 				tosend->data = htonl(0);
 				tosend->op = 'E';
@@ -233,9 +240,8 @@ void * yasc (void * arg)
 		printf("Thread vai fechar o seu socket\n");
 		self->socket = 0;
 		close(newsockfd);
-		self->socket=0;
 		/* CLEANING */
 		FreeStack(&stack);
-		time_end = time(NULL);
+
 	}
 }

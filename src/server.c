@@ -25,7 +25,7 @@ the FIFO is full or not so that the client can try connecting again or not;
 #include "fifo.h"
 #include "pool.h"
 #include "protocol.h"
-
+#include "manager.h"
 
 sigset_t  set;
 
@@ -84,7 +84,7 @@ void threadpool (){
 	first_pool_node = create_pool();
 	
 	for(i=0; i< pool_no; i++){
-		create_pool_node(&first_pool_node);		
+		create_pool_node(&first_pool_node, 1);
 	}
 	
 }
@@ -104,7 +104,10 @@ int main(int argc, char *argv[])
 /* SERVADMIN */
 	pthread_t * servadmin_t;
 	servadmin_t = (pthread_t *) malloc (1*sizeof(pthread_t));
-
+	
+/* POOL MANAGER */
+	pthread_t * poolman_t;
+	poolman_t = (pthread_t *) malloc (1*sizeof(pthread_t));
 /* SOCKETS */
      int sockfd, newsockfd, portno;
      socklen_t clilen;
@@ -132,10 +135,11 @@ int main(int argc, char *argv[])
      clilen = sizeof(cli_addr);
      
 	pthread_create(servadmin_t, NULL, servadmin, NULL);
+	pthread_create(poolman_t, NULL, manager, NULL);
 	threadpool(); /* creates threadpool */
 	 
 	 sem_init(&sem_fifo_used, 0, 0);
-	 sem_init(&sem_fifo_free, 0, FIFO_MAX); 
+	 sem_init(&sem_fifo_free, 0, MAX_FIFO); 
 	 
 	 while(1){
 	 	sem_wait(&sem_fifo_free);
@@ -147,7 +151,7 @@ int main(int argc, char *argv[])
 
 	    queue (&front ,&back, newsockfd);
 	    sem_post(&sem_fifo_used);
-        
+        fifo_count++;
         /* Exiting Critical Region*/
         pthread_mutex_unlock(&mux);
      }
