@@ -14,6 +14,7 @@ the accept command creates a new socket even when the maximum FIFO size is met
 solution: accept all sockets the way we are doing but write TRUE or FALSE whether
 the FIFO is full or not so that the client can try connecting again or not;
 */
+
 #include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -103,9 +104,11 @@ int main(int argc, char *argv[])
      serv_addr.sin_addr.s_addr = INADDR_ANY;
      serv_addr.sin_port = htons(portno);
      if (bind(sockfd, (struct sockaddr *) &serv_addr,
-              sizeof(serv_addr)) < 0) 
-              error("ERROR on binding");
-     listen(sockfd,1000); /* 1000 means???*/
+              sizeof(serv_addr)) < 0) {
+              perror("ERROR on binding");
+              exit(-1);
+     }
+     listen(sockfd,2); /* 1000 means???*/
      clilen = sizeof(cli_addr);
      
 	pthread_create(servadmin_t, NULL, servadmin, NULL);

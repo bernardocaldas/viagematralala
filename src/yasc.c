@@ -228,8 +228,8 @@ void * yasc (void * arg)
 		nsend = 0;
 	}
 	
-	out:
 		printf("Thread vai fechar o seu socket\n");
+		self->socket = 0;
 		close(newsockfd);
 		/* CLEANING */
 		FreeStack(&stack);

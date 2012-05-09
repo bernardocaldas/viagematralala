@@ -2,5 +2,9 @@
 make
 for i in {1..1000}
 do
-	  ./bin/cliente localhost 2000 txt/ordens1.txt
+	  ./bin/cliente localhost 2000 txt/ordens1.txt &
 done
+
+#Exemplo de mensagens de erro:
+# ./test/multi: line 7:  4461 Aborted                 ./bin/cliente localhost 2000 txt/ordens1.txt
+# ./test/multi: line 7:  4517 Aborted                 ./bin/cliente localhost 2000 txt/ordens1.txt
