@@ -54,4 +54,15 @@ void FreeStack (Stack ** top){
 
 }
 
+void PrintStack(Stack ** top){
+	Stack * aux;
+	aux=(*top);
+	while(aux!=NULL)
+	{
+	printf("%d ", aux->num);
+	aux=aux->next;
+	}
+	printf("\n");
+}
+
 

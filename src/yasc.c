@@ -32,6 +32,8 @@ void * yasc (void * arg)
     self = (pool_node *)arg;
     
     time_begin = 0;
+    stack=CreateStack();
+    self->stack=&stack;
    
     
     while(1){
@@ -231,6 +233,7 @@ void * yasc (void * arg)
 		printf("Thread vai fechar o seu socket\n");
 		self->socket = 0;
 		close(newsockfd);
+		self->socket=0;
 		/* CLEANING */
 		FreeStack(&stack);
 		time_end = time(NULL);
