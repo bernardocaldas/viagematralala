@@ -62,7 +62,7 @@ void * yasc (void * arg)
 			n = read(newsockfd,torecv,sizeof(package));
 			if (n <= 0){
 				perror("ERROR reading from socket");
-				break;
+				goto out; /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 			}
 			if(torecv->op == 'I'){
 			    stack=CreateStack();
@@ -236,6 +236,7 @@ void * yasc (void * arg)
 		nsend = 0;
 	}
 	
+	out:
 		printf("Thread vai fechar o seu socket\n");
 		close(newsockfd);
 		self->socket = 0;
