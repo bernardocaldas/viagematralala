@@ -21,6 +21,7 @@ void create_pool_node(pool_node ** first, int flag){
 	new->socket = 0;
 	new->stack=NULL;
 	new->flag = flag;
+	pthread_mutex_init(&(new->stackmux),NULL);
 	if(aux!= NULL){
 		while(aux->next != NULL){ 
 			aux=aux->next;

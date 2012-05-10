@@ -42,7 +42,9 @@ void display_client_info(){
 		{
 			getpeername(aux->socket,(struct sockaddr *)&sockinfo,&addrlen);
 			printf("Client with IP address %s and the following stack contents:",inet_ntoa(sockinfo.sin_addr));
+			pthread_mutex_lock(&(aux->stackmux));
 			PrintStack(aux->stack);
+			pthread_mutex_unlock(&(aux->stackmux));
 		}
 		aux=aux->next;
 	}

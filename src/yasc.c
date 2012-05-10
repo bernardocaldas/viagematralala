@@ -78,7 +78,9 @@ void * yasc (void * arg)
 			}
 			if(torecv->op == 'I'){
 			    stack=CreateStack();
+    			pthread_mutex_lock(&(self->stackmux));
     			self->stack=&stack;
+    			pthread_mutex_unlock(&(self->stackmux));
 				break;
 			}
 			else{
@@ -103,7 +105,9 @@ void * yasc (void * arg)
 		{
 			/* MATH OPERANDS*/
 			if(ctemp=='+' || ctemp=='-' || ctemp=='/'||ctemp=='%'||ctemp=='*'){
+			pthread_mutex_lock(&(self->stackmux));
 			depth = DepthStack(&stack);
+			pthread_mutex_unlock(&(self->stackmux));
 			if(depth == 0)
 			{
 				printf("Pilha vazia: Operação inválida\n");
@@ -119,31 +123,38 @@ void * yasc (void * arg)
 					/* SOMA*/
 					case '+':
 						printf("Apanhei uma soma\n");
+						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA+opB;
 						PushStack(&stack,opResult);
+						pthread_mutex_unlock(&(self->stackmux));
 						printf("%d+%d=%d\n",opA,opB,opResult);
 						break;
 					/*SUBTRAÇÃO*/
 					case '-':
 						printf("Apanhei uma subtração\n");
+						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA-opB;
 						PushStack(&stack,opResult);
+						pthread_mutex_unlock(&(self->stackmux));
 						printf("%d-%d=%d\n",opA,opB,opResult);
 						break;
 					case '*':
 						printf("Apanhei uma multiplicação\n");
+						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA*opB;
 						PushStack(&stack,opResult);
+						pthread_mutex_unlock(&(self->stackmux));
 						printf("%d*%d=%d\n",opA,opB,opResult);
 						break;
 					case '/':
 						printf("Apanhei uma divisão\n");
+						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						if(opB==0){
@@ -152,15 +163,18 @@ void * yasc (void * arg)
 						} else{
 						opResult=opA/opB;
 						PushStack(&stack,opResult);
+						pthread_mutex_unlock(&(self->stackmux));
 						printf("%d/%d=%d\n",opA,opB,opResult);
 						}
 						break;
 					case '%':
 						printf("Apanhei um módulo\n");
+						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA%opB;
 						PushStack(&stack,opResult);
+						pthread_mutex_unlock(&(self->stackmux));
 						printf("%d mod %d=%d\n",opA,opB,opResult);
 						break;
 					}
@@ -177,15 +191,21 @@ void * yasc (void * arg)
 				/* COMMANDS*/
 				switch(ctemp){
 					case 'I':
+						pthread_mutex_lock(&(self->stackmux));
 						FreeStack(&stack);
+						pthread_mutex_unlock(&(self->stackmux));
 						printf("A pilha está agora vazia\n");
 						break;
 					case 'D':
 						printf("Apanhei um número %d\n", itemp);
+						pthread_mutex_lock(&(self->stackmux));
 						PushStack(&stack, itemp);
+						pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case 'P':
+						pthread_mutex_lock(&(self->stackmux));
 						depth = DepthStack(&stack);
+						pthread_mutex_unlock(&(self->stackmux));
 						if(depth == 0){
 							printf("A pilha está vazia\n");
 							csend = 'E';
@@ -195,8 +215,10 @@ void * yasc (void * arg)
 						}
 						break;
 					case 'R':
+						pthread_mutex_lock(&(self->stackmux));
 						if(DepthStack(&stack)==1){
 							nsend = PopStack(&stack);
+							pthread_mutex_unlock(&(self->stackmux));
 							printf("O resultado é: %d\n", nsend);
 						}else{
 							printf("Pilha vazia ou com demasiados elementos\n");
@@ -204,14 +226,18 @@ void * yasc (void * arg)
 						}	
 						break;						
 					case 'T':
+						pthread_mutex_lock(&(self->stackmux));
 						if(DepthStack(&stack) == 0){
+							pthread_mutex_unlock(&(self->stackmux));
 							printf("A pilha está vazia\n");
 							csend = 'E';
 						}
 						else{
+							pthread_mutex_lock(&(self->stackmux));
 							nsend = PopStack(&stack);
 							printf("Topo da pilha: %d\n", nsend);
 							PushStack(&stack, nsend);
+							pthread_mutex_unlock(&(self->stackmux));
 						}
 						break;
 					case 'G':
@@ -254,7 +280,9 @@ void * yasc (void * arg)
 		close(newsockfd);
 		self->socket = 0;
 		/* CLEANING */
+		pthread_mutex_lock(&(self->stackmux));
 		FreeStack(&stack);
+		pthread_mutex_unlock(&(self->stackmux));
 
 	}
 }
