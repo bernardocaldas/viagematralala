@@ -22,10 +22,12 @@ void * manager ( void * arg){
 	while(1){
 		sleep(1);
 		if(fifo_count > 2/3*MAX_FIFO)
+			pthread_mutex_lock(&poolmux);
 			if(pool_no<MAX_POOL){
 				create_pool_node (&first_pool_node, 0);
 				pool_no++;
 			}
+			pthread_mutex_unlock(&poolmux);
 	}
 	pthread_exit (NULL);
 }

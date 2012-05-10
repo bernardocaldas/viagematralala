@@ -15,13 +15,16 @@ void create_pool_node(pool_node ** first, int flag){
 	new = (pool_node *) malloc (sizeof(pool_node));
 	new->thread = (pthread_t*) malloc (sizeof(pthread_t));
 	pthread_create(new->thread, NULL, yasc, (void*)new);
-	aux = *first;
+	
+	
 	new->time = 0;
 	new->next = NULL;
 	new->socket = 0;
 	new->stack=NULL;
 	new->flag = flag;
 	pthread_mutex_init(&(new->stackmux),NULL);
+	pthread_mutex_lock(&poolmux);
+	aux = *first;
 	if(aux!= NULL){
 		while(aux->next != NULL){ 
 			aux=aux->next;
@@ -30,6 +33,7 @@ void create_pool_node(pool_node ** first, int flag){
 	}else{
 		*first = new;
 	}
+	pthread_mutex_unlock(&poolmux);
 	
 }
 
