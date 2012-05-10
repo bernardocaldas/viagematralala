@@ -1,29 +1,32 @@
-
-#include <string.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <endian.h>
+#include <stdio.h>
+#include <string.h>
 
-char * convert_send (int a){
-	char * data_temp; 
-	data_temp = calloc(9,sizeof(char));
+#define SIZE 8
+
+void convert_send(int n, char data[]){
+	int bendian;
+	char be32[9];
+	int i;
 	
-	sprintf(data_temp, "%X\n", htobe32(a));
-	printf("%d\n",be32toh(htobe32(a)));
-	printf("%s\n", data_temp);
-	return data_temp;
+	bendian = htonl(n);
+	sprintf(be32, "%X\n", bendian);
+	for(i=0; i<SIZE; i++){
+		data[i]=be32[i];
+	}
 }
 
-int convert_recv (char * b){
-	char * data, * data2;
-	int num;
-	data = calloc(9,sizeof(char));
-	data2 = calloc(9,sizeof(char));
+int convert_recv (char data[]){
+	char data_temp[9];
+	int bendian;
+	int i;
 	
-	data=b; 
-	printf("%s\n", data);
-	data[8]='\0';
-	num = strtod(data,NULL);
-	printf("%d\n", be32toh(num));
-	return be32toh(num);
+	for(i=0; i<SIZE; i++){
+		data_temp[i]=data[i];
+	}
+	data_temp[8]='\0';
+	sscanf(data_temp, "%X", &bendian);
+	return ntohl(bendian);
+
 }
+

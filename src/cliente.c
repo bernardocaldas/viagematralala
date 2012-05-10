@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 			/*printf("result = %s\n", result);*/
 			/* ENVIO DE CARACTER*/
 			if(sscanf(result, "%d%s", &ntemp, lixo)==1){
-				tosend->data = htonl(ntemp);
+				convert_send(ntemp, tosend->data);
 				tosend->op = 'D';
 			} else {
 				/*ENVIO DE INTEIRO*/
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 					debug = !debug;
 				if(ctemp == 'D') /* O caracter 'D' não deve ser introduzido pelo utilizador*/
 					ctemp = 'E'; 
-					tosend->data = htonl(0);
+					convert_send(0, tosend->data);
 					tosend->op = ctemp;	
 				} else {
 				/* TODO cliente deve enviar para servidor tudo o que lhe aparece à frente ou deverá existir um sort à partida? */
@@ -129,10 +129,10 @@ int main(int argc, char *argv[])
 			  error("ERROR reading from socket");
 			if (debug == 1){
 				if(tosend->op == 'D')
-					printf("%c%d=>",tosend->op, ntohl(tosend->data));
+					printf("%c%d=>",tosend->op, ntemp);
 				else
 					printf("%c=>", tosend->op);
-				printf("%c %d\n",torecv->op, ntohl(torecv->data));
+					printf("%c %d\n",torecv->op, convert_recv(torecv->data));
 			}
 		
 			result = strtok(NULL, delims);

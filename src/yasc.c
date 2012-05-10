@@ -70,7 +70,7 @@ void * yasc (void * arg)
 				break;
 			}
 			else{
-				tosend->data = htonl(0);
+				convert_send(0, tosend->data);
 				tosend->op = 'E';
 				n = write(newsockfd, tosend, sizeof(package));
 				if (n < 0) {
@@ -82,7 +82,7 @@ void * yasc (void * arg)
 		while(1);
 	
 		ctemp = torecv->op;
-		itemp = ntohl(torecv->data);
+		itemp = convert_recv(torecv->data);
 		csend = '\0';
 		nsend = 0;
 
@@ -217,8 +217,7 @@ void * yasc (void * arg)
 						nsend = 0;
 				}
 			}
-	
-		tosend->data = htonl(nsend);
+		convert_send(nsend, tosend->data);
 		tosend->op = csend;
 		n = write(newsockfd, tosend, sizeof(package));
 		if (n < 0) {
@@ -232,7 +231,7 @@ void * yasc (void * arg)
 			break;
 		}
 		ctemp = torecv->op;
-		itemp = ntohl(torecv->data);
+		itemp = convert_recv(torecv->data);
 		csend = '\0';
 		nsend = 0;
 	}
