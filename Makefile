@@ -10,14 +10,14 @@ BIBS = -lpthread
 
 all:  server cliente
 
-server: server.o yasc.o stack.o fifo.o pool.o manager.o
-	$(CC) $(CFLAGS) -g -o bin/server obj/server.o obj/yasc.o obj/stack.o obj/fifo.o obj/pool.o obj/manager.o $(BIBS)
+server: server.o yasc.o stack.o fifo.o pool.o manager.o protocol.o
+	$(CC) $(CFLAGS) -g -o bin/server obj/server.o obj/yasc.o obj/stack.o obj/fifo.o obj/pool.o obj/manager.o obj/protocol.o $(BIBS)
 	
 server.o: server.c yasc.h pool.h
 	$(CC) $(CFLAGS) -g -o obj/server.o -I include/ -c src/server.c 
 
-cliente: cliente.o
-	$(CC) $(CFLAGS) -g -o bin/cliente obj/cliente.o
+cliente: cliente.o protocol.o
+	$(CC) $(CFLAGS) -g -o bin/cliente obj/cliente.o obj/protocol.o
 	
 cliente.o: cliente.c protocol.h
 	$(CC) $(CFLAGS) -g -o obj/cliente.o -I include/ -c src/cliente.c
@@ -36,6 +36,9 @@ fifo.o: fifo.c fifo.h
 
 pool.o: pool.c pool.h yasc.h
 	$(CC) $(CFLAGS) -g -o obj/pool.o -I include/ -c src/pool.c
+
+protocol.o: protocol.c
+	$(CC) $(CFLAGS) -g -o obj/protocol.o -I include/ -c src/protocol.c
 	
 
 

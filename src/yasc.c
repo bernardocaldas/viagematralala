@@ -20,14 +20,12 @@ void * yasc (void * arg)
 	Stack * stack;
 	char ctemp, csend;
 	int itemp,opA,opB,opResult, top, nsend, depth;
-	char * result;
-	char delims[2]={' ',';'};
-	char buffer[256];
-	char msg[256];
     int newsockfd, n;
+    char * data_temp;
     package * torecv, *tosend;
     pool_node * self;
     struct timespec timer;
+    int i;
     
     
     self = (pool_node *)malloc(1*sizeof(pool_node));
@@ -39,7 +37,7 @@ void * yasc (void * arg)
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
 			if(sem_timedwait(&sem_fifo_used, &timer)==-1){;
-				printf("Thread will die; sem_out %d\n", n);
+				printf("Thread will die\n", n);
 				pthread_exit(NULL);
 			}
 		}else{
@@ -61,7 +59,7 @@ void * yasc (void * arg)
 		do{
 			n = read(newsockfd,torecv,sizeof(package));
 			if (n <= 0){
-				perror("ERROR reading from socket");
+				perror("ERROR reading from socket\n");
 				break;
 			}
 			if(torecv->op == 'I'){
@@ -70,11 +68,14 @@ void * yasc (void * arg)
 				break;
 			}
 			else{
-				tosend->data = htonl(0);
+				data_temp = convert_send(0);
+				for(i=0;i<SIZE; i++){
+					(tosend->data)[i] = data_temp[i];
+				}
 				tosend->op = 'E';
 				n = write(newsockfd, tosend, sizeof(package));
 				if (n < 0) {
-					perror("ERROR writing to socket");
+					perror("ERROR writing to socket\n");
 					break;
 				}
 			}
@@ -82,7 +83,8 @@ void * yasc (void * arg)
 		while(1);
 	
 		ctemp = torecv->op;
-		itemp = ntohl(torecv->data);
+		itemp = convert_recv(torecv->data);
+		
 		csend = '\0';
 		nsend = 0;
 
@@ -218,7 +220,11 @@ void * yasc (void * arg)
 				}
 			}
 	
-		tosend->data = htonl(nsend);
+	
+		data_temp = convert_send(nsend);
+		for(i=0;i<SIZE; i++){
+			(tosend->data)[i] = data_temp[i];
+		}
 		tosend->op = csend;
 		n = write(newsockfd, tosend, sizeof(package));
 		if (n < 0) {
@@ -232,7 +238,7 @@ void * yasc (void * arg)
 			break;
 		}
 		ctemp = torecv->op;
-		itemp = ntohl(torecv->data);
+		itemp = convert_recv(torecv->data);
 		csend = '\0';
 		nsend = 0;
 	}
