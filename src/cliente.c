@@ -23,7 +23,6 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <netdb.h> 
 #include "protocol.h"
 
-
 #define MAX_CONNECT 5
 
 int main(int argc, char *argv[])
@@ -36,13 +35,11 @@ int main(int argc, char *argv[])
     package * tosend, *torecv;
     char delims[3]={' ',';','\n'};
     char * result;
-    char * data_temp;
     char buffer[LEN+1];
     char lixo[LEN+1];
     FILE * file;
     int debug = 0;
     int connect_cnt, aux_connect;
-    int i;
     
     tosend = (package*) malloc(sizeof(package));
     torecv = (package*) malloc(sizeof(package));
@@ -100,28 +97,20 @@ int main(int argc, char *argv[])
 			/*printf("result = %s\n", result);*/
 			/* ENVIO DE CARACTER*/
 			if(sscanf(result, "%d%s", &ntemp, lixo)==1){
-				data_temp = convert_send(ntemp);
-				for(i=0;i<SIZE; i++){
-					(tosend->data)[i] = data_temp[i];
-					printf("tosend %s\n",tosend->data);
-				}
+				tosend->data = htonl(ntemp);
 				tosend->op = 'D';
 			} else {
 				/*ENVIO DE INTEIRO*/
 				if(sscanf(result, "%c%s", &ctemp, lixo)==1){
 				if(ctemp == 'G')
 					debug = !debug;
-				if(ctemp == 'D'){ /* O caracter 'D' não deve ser introduzido pelo utilizador*/
+				if(ctemp == 'D') /* O caracter 'D' não deve ser introduzido pelo utilizador*/
 					ctemp = 'E'; 
-					data_temp = convert_send(0);
-					for(i=0;i<SIZE; i++){
-						(tosend->data)[i] = data_temp[i];
-					}
+					tosend->data = htonl(0);
 					tosend->op = ctemp;	
 				} else {
 				/* TODO cliente deve enviar para servidor tudo o que lhe aparece à frente ou deverá existir um sort à partida? */
 					break;
-				}
 				}
 			}
 			
@@ -140,10 +129,10 @@ int main(int argc, char *argv[])
 			  error("ERROR reading from socket");
 			if (debug == 1){
 				if(tosend->op == 'D')
-					printf("%c%d=>",tosend->op, convert_recv(tosend->data));
+					printf("%c%d=>",tosend->op, ntohl(tosend->data));
 				else
 					printf("%c=>", tosend->op);
-				printf("%c %d\n",torecv->op, convert_recv(torecv->data));
+				printf("%c %d\n",torecv->op, ntohl(torecv->data));
 			}
 		
 			result = strtok(NULL, delims);

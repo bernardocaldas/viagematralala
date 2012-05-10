@@ -20,12 +20,14 @@ void * yasc (void * arg)
 	Stack * stack;
 	char ctemp, csend;
 	int itemp,opA,opB,opResult, top, nsend, depth;
+	char * result;
+	char delims[2]={' ',';'};
+	char buffer[256];
+	char msg[256];
     int newsockfd, n;
-    char * data_temp;
     package * torecv, *tosend;
     pool_node * self;
     struct timespec timer;
-    int i;
     
     
     self = (pool_node *)malloc(1*sizeof(pool_node));
@@ -37,7 +39,7 @@ void * yasc (void * arg)
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
 			if(sem_timedwait(&sem_fifo_used, &timer)==-1){;
-				printf("Thread will die\n", n);
+				printf("Thread will die; sem_out %d\n", n);
 				pthread_exit(NULL);
 			}
 		}else{
@@ -59,7 +61,7 @@ void * yasc (void * arg)
 		do{
 			n = read(newsockfd,torecv,sizeof(package));
 			if (n <= 0){
-				perror("ERROR reading from socket\n");
+				perror("ERROR reading from socket");
 				break;
 			}
 			if(torecv->op == 'I'){
@@ -68,14 +70,11 @@ void * yasc (void * arg)
 				break;
 			}
 			else{
-				data_temp = convert_send(0);
-				for(i=0;i<SIZE; i++){
-					(tosend->data)[i] = data_temp[i];
-				}
+				tosend->data = htonl(0);
 				tosend->op = 'E';
 				n = write(newsockfd, tosend, sizeof(package));
 				if (n < 0) {
-					perror("ERROR writing to socket\n");
+					perror("ERROR writing to socket");
 					break;
 				}
 			}
@@ -83,8 +82,7 @@ void * yasc (void * arg)
 		while(1);
 	
 		ctemp = torecv->op;
-		itemp = convert_recv(torecv->data);
-		
+		itemp = ntohl(torecv->data);
 		csend = '\0';
 		nsend = 0;
 
@@ -220,11 +218,7 @@ void * yasc (void * arg)
 				}
 			}
 	
-	
-		data_temp = convert_send(nsend);
-		for(i=0;i<SIZE; i++){
-			(tosend->data)[i] = data_temp[i];
-		}
+		tosend->data = htonl(nsend);
 		tosend->op = csend;
 		n = write(newsockfd, tosend, sizeof(package));
 		if (n < 0) {
@@ -238,16 +232,17 @@ void * yasc (void * arg)
 			break;
 		}
 		ctemp = torecv->op;
-		itemp = convert_recv(torecv->data);
+		itemp = ntohl(torecv->data);
 		csend = '\0';
 		nsend = 0;
 	}
 	
 		printf("Thread vai fechar o seu socket\n");
-		self->socket = 0;
 		close(newsockfd);
+		self->socket = 0;
 		/* CLEANING */
 		FreeStack(&stack);
 
 	}
 }
+

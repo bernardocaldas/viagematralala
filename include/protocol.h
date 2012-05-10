@@ -1,11 +1,7 @@
-#define SIZE 8 /* fgets reading length*/
-#define LEN 255
+#define LEN 255 /* fgets reading length*/
 
 
 typedef struct s_package {
-	char data[8];
+	int data;
 	char op;
 }package;
-
-char * convert_send (int a);
-int convert_recv (char * b);
