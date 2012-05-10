@@ -1,18 +1,13 @@
-/* 
-Authors: 
+/*
+Server
 
-67557 Bernardo Caldas
-67636 João Silva
+Programação de Sistemas
+2011/2012
 
-Description: A simple server in the internet domain using STREAM
-The port number is passed as an argument; 
-unilateral communication;
-each time a request is made a thread is created to deal with it;
-
-Problems: makefile does not work with all the previous flags;
-the accept command creates a new socket even when the maximum FIFO size is met
-solution: accept all sockets the way we are doing but write TRUE or FALSE whether
-the FIFO is full or not so that the client can try connecting again or not;
+Authors:
+67557 ~ Bernardo Caldas
+67636 ~ João Silva
+ 
 */
 
 #include <time.h>
@@ -27,32 +22,44 @@ the FIFO is full or not so that the client can try connecting again or not;
 #include "protocol.h"
 #include "manager.h"
 
-sigset_t  set;
 
+/* 
+FUNCTION: display_client_info
+
+DESCRIPTION:
+This is a subfunction of the server administration tool that goes through all the threads in the 'pool' and prints their hostname, IP and current Stack.
+*/
 void display_client_info(){
 	pool_node *aux;
-	aux=first_pool_node;
 	struct sockaddr_in sockinfo;
 	int addrlen;
+	
+	aux=first_pool_node;
 	addrlen=sizeof(sockinfo);
-	printf("Info de clientes:\n");
+	printf("Clients Info:\n");
 	while(aux!= NULL){
 		if(aux->socket!=0)
 		{
 			getpeername(aux->socket,(struct sockaddr *)&sockinfo,&addrlen);
-			printf("Cliente com endereço IP %s e a pilha tem o conteúdo:",inet_ntoa(sockinfo.sin_addr));
+			printf("Client with IP address %s and the following stack contents:",inet_ntoa(sockinfo.sin_addr));
 			PrintStack(aux->stack);
 		}
 		aux=aux->next;
 	}
-
-
 }
 
-void tratamento (int sigNumb){
+void treatment (int sigNumb){
 	printf("Signal received\n");
 }
 
+/*
+FUNCTION: servadmin
+
+DESCRIPTION:
+Function that is run by a particular thread that is always available for input via terminal. It accepts two commands:
+	- F: closes the server and frees all its memory;
+	- M: displays info of the machines attached to the server at the current moment;
+*/
 void * servadmin (){
 	char buffer[LEN],lixo[LEN],ctemp;
 	bzero(buffer,LEN+1);
@@ -67,16 +74,21 @@ void * servadmin (){
 		/*TEMP*/ exit(1);
 		}
 		else{
-		printf("Escreva comandos válidos\n");
+		printf("Please insert valid commands\n");
 		}
 	} 
 	else{
-		printf("Escreva comandos válidos\n");
+		printf("Please insert valid commands\n");
 	}
 	printf("Insert command: \n");
 	}
 }
 
+/* FUNCTION: threadpool 
+
+DESCRIPTION: 
+this function is not associated with any particular thread as it is called only once by the main function in order to initialize the thread_pool; before such measures have been taken the server will be unable to cope with client requests
+*/
 void threadpool (){
 
 	int i;
@@ -85,9 +97,17 @@ void threadpool (){
 	
 	for(i=0; i< pool_no; i++){
 		create_pool_node(&first_pool_node, 1);
-	}
-	
+	}	
 }
+
+/*Server
+
+DESCRIPTION: 
+Firstly, the socket is configured according to the chosen protocol. Then the threadpool is created alongside the pool_manager thread and the server_administration thread. This threads will run in parallel with the main one. The main one will accept requests from clients and place them in the data structure FIFO. They will be fetched by the threads in the pool as soon as the threads are available
+
+The FIFO queue is protected by a mutex to avoid problems between pool_threads and server. When a request is inserted in FIFO a semaphore is posted so that the pool_threads know there is a pending request. There is also another semaphore that measures the free_pool_threads and controls the maximum size of the FIFO structure.
+
+*/
 
 
 int main(int argc, char *argv[])
@@ -96,7 +116,7 @@ int main(int argc, char *argv[])
 	pthread_mutex_init(&mux, NULL);
 
 /*SIGNALS*/
-	signal(SIGUSR1,tratamento);
+	signal(SIGUSR1,treatment);
 	
 /* FIFO */
 	create_fifo(&front, &back);
@@ -134,9 +154,10 @@ int main(int argc, char *argv[])
      listen(sockfd,2); /* 1000 means???*/
      clilen = sizeof(cli_addr);
      
-	pthread_create(servadmin_t, NULL, servadmin, NULL);
-	pthread_create(poolman_t, NULL, manager, NULL);
-	threadpool(); /* creates threadpool */
+     threadpool(); /* creates threadpool */
+	 pthread_create(servadmin_t, NULL, servadmin, NULL);
+	 pthread_create(poolman_t, NULL, manager, NULL);
+
 	 
 	 sem_init(&sem_fifo_used, 0, 0);
 	 sem_init(&sem_fifo_free, 0, MAX_FIFO); 
@@ -147,12 +168,11 @@ int main(int argc, char *argv[])
      	if (newsockfd < 0) 
           perror("ERROR on accept");
         pthread_mutex_lock(&mux);
-        /* Entering Critical Region*/
-
+        /* Entering Critical FIFO Region*/
 	    queue (&front ,&back, newsockfd);
 	    sem_post(&sem_fifo_used);
         fifo_count++;
-        /* Exiting Critical Region*/
+        /* Exiting Critical FIFO Region*/
         pthread_mutex_unlock(&mux);
      }
      close(sockfd);

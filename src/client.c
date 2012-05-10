@@ -5,15 +5,25 @@ Programação de Sistemas
 2011/2012
 
 Authors:
-Bernardo Caldas
-João Silva
+67557 ~ Bernardo Caldas
+67636 ~ João Silva
 
-Arguments: serverhost, portnumber (usually 2000+ & it must be the same as the server), filename (pre-written orders) ;
+ARGUMENTS: 
+serverhost, portnumber (usually 2000+ & it must be the same as the server), filename (pre-written orders) ;
 
-Description: creates the socket and binds it with the proper address; then a connection attempt is made: if the connection does not succeed the client will retry to connect again until the limit MAX_CONNECT is achieved; if the connection succeeds 
+DESCRIPTION: 
+Creates the socket and binds it with the proper address. Then a connection attempt is made: if the connection does not succeed the client will retry to connect again until the limit MAX_CONNECT is achieved; if the connection succeeds the program will ask for the initialization variable 'I'. Until such criterion is met there is no writing to the socket.
 
-Problems: makefile can't use all flags - errors concerning the existence of some fields in struch hostent; 
+RETURNS:
+- 0 by default (only reached if fgets == NULL);
+- 1 if the user inserts command K;
 
+- -1 the arguments usage wasn't correct;
+- -2 the specified host does not exist;
+- -3 maximum connecting attempts;
+- -4 error writing to or reading from socket;
+
+Problems: makefile can't use all flags - errors concerning the existence of some fields in struct hostent; 
 */
 
 /* TODO : funciona com IP e com hostname!??!?*/
@@ -29,30 +39,42 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <netdb.h> 
 #include "protocol.h"
 
-#define MAX_CONNECT 5
 
+#define MAX_CONNECT 5 /* defines maximum connection attempts */
+
+void clean ( struct hostent * server, package * tosend, package * torecv, FILE * file){
+/* CLEANING */
+    if(file!= stdin){
+    	fclose(file);
+    }
+    free(tosend);
+    free(torecv);
+}
 
 int main(int argc, char *argv[])
 {
-    int sockfd, portno, n, ntemp,aux;
-    char ctemp;
+	/*Server*/
+    int sockfd, portno;
     struct sockaddr_in serv_addr;
     struct hostent *server;
-    pid_t pid;
+    int connect_cnt, aux_connect;
+    /*Communication*/
     package * tosend, *torecv;
     char delims[3]={' ',';','\n'};
     char * result;
     char buffer[LEN+1];
     char lixo[LEN+1];
     FILE * file;
+    char ctemp;
+    int n, ntemp, aux;
+    /*Flags*/
     int debug = 0;
-    int connect_cnt, aux_connect;
     int init = 0;
 	
 	/* CONECTION WITH SERVER */
     if (argc < 3) {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
-       exit(0);
+       exit(-1);
     }
     portno = atoi(argv[2]);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -61,7 +83,7 @@ int main(int argc, char *argv[])
     server = gethostbyname(argv[1]);
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");
-        exit(0);
+        exit(-2);
     }
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
@@ -82,7 +104,7 @@ int main(int argc, char *argv[])
     
     if(aux_connect != 0){
     	printf("ERROR Maximum connecting attempts exceeded\n");
-    	exit(-1);
+    	exit(-3);
    	}
 	
 	/* ORDERS FROM FILE */
@@ -141,23 +163,29 @@ int main(int argc, char *argv[])
 						convert_send(0, tosend->data);
 						tosend->op = ctemp;	
 					} else {
-					/* TODO cliente deve enviar para servidor tudo o que lhe aparece à frente ou deverá existir um sort à partida? */
+					/* TODO cliente deve enviar para servidor tudo o que lhe aparece à frente ou deverá existir um sort à partida para além do 'lixo' que já não é comtemplado */
 						break;
 					}
 				}
-
+				/* WRITING and READING operations*/
 				n = write(sockfd,tosend,sizeof(package));
-				if (n < 0) 
-				  error("ERROR writing to socket");
-						  
-				if(ctemp == 'K' ){
+				if (n <= 0){
+				  perror("ERROR writing to socket");
+				  clean (server,tosend, torecv, file);
+				  exit(-4);
+				 }
+				/* if command 'K' is given the client closes without waiting for an answer*/
+				if(ctemp == 'K' ){ 
 					printf("Client closing\n");
-					exit(0);
+					return 1;
 				}
 				
 				n = read(sockfd,torecv,sizeof(package));
-				if(n<0)
-				  error("ERROR reading from socket");
+				if(n<= 0){
+				  perror("ERROR reading from socket");
+				  clean (server,tosend, torecv, file);
+				  exit(-4);
+				}
 				if (debug == 1){
 					if(tosend->op == 'D')
 						printf("%c%d=>",tosend->op, ntemp);
@@ -170,13 +198,9 @@ int main(int argc, char *argv[])
 			result = strtok(NULL, delims);
 		}
 		bzero(buffer,256);
-    	
     }
     close(sockfd);
     /* CLEANING */
-    fclose(file);
-    free(server);
-    free(tosend);
-    free(torecv);
+    clean (server,tosend, torecv, file);
     return 0;
 }

@@ -3,9 +3,6 @@
 #include <stack.h>
 
 
-/*
-TODO: não faltam operações de Free no POP?
-*/
 Stack * CreateStack()
 {
 	return NULL;

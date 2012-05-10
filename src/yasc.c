@@ -1,7 +1,19 @@
-/* Yet Another Simple Calculator
+/*
+YASC [Yet Another Simple Calculator]
 
-A função de que consiste o programa é invocada por server.c para servir como código das threads criadas
+Programação de Sistemas
+2011/2012
 
+Authors:
+Bernardo Caldas
+João Silva
+
+ARGUMENTS: 
+arg - contains a 'pool_node' structure;
+
+DESCRIPTION:
+This function is called by threads placed in the pool. The threads will be blocked by the semaphore as soon as they are called. The semaphore wait function depends on whether the threads are permanent or not. Non-permanent threads have a timeout after which they will die. After the Stack is initialized through the 'I' command the calculator will be available.
+If the client decides to abandon the session this thread will block until a new request appears (or a timeout is reached);
 
 */
 #include "stack.h"
@@ -17,24 +29,23 @@ A função de que consiste o programa é invocada por server.c para servir como 
 
 void * yasc (void * arg)
 {	
+	/*Thread*/
+	pool_node * self;
+    struct timespec timer;
+    /*Calculator*/
 	Stack * stack;
 	char ctemp, csend;
 	int itemp,opA,opB,opResult, top, nsend, depth;
-	char * result;
-	char delims[2]={' ',';'};
-	char buffer[256];
-	char msg[256];
     int newsockfd, n;
     package * torecv, *tosend;
-    pool_node * self;
-    struct timespec timer;
-    
+
     
     self = (pool_node *)malloc(1*sizeof(pool_node));
     self = (pool_node *)arg;
    
     
     while(1){
+    	/*NON-PERMANENT THREAD*/
     	if(self->flag == 0){
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
@@ -43,6 +54,7 @@ void * yasc (void * arg)
 				pthread_exit(NULL);
 			}
 		}else{
+		/*PERMANENT THREAD*/
 			sem_wait(&sem_fifo_used);
 		}
 		pthread_mutex_lock(&mux);
@@ -57,7 +69,7 @@ void * yasc (void * arg)
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
 	
-		/* leitura e resposta inicial*/
+		/* INITIALIZATION OF THE COMMUNICATION SESSION*/
 		do{
 			n = read(newsockfd,torecv,sizeof(package));
 			if (n <= 0){
@@ -85,10 +97,11 @@ void * yasc (void * arg)
 		itemp = convert_recv(torecv->data);
 		csend = '\0';
 		nsend = 0;
-
+		
+		/* COMMUNICATION SESSION */
 		while(ctemp != 'K')
 		{
-			/* Esta operação é realizada para que não se repitam as verificações relativas à pilha vazia e à presença de um único operando; solução mais elegante precisa-se*/
+			/* MATH OPERANDS*/
 			if(ctemp=='+' || ctemp=='-' || ctemp=='/'||ctemp=='%'||ctemp=='*'){
 			depth = DepthStack(&stack);
 			if(depth == 0)
@@ -161,7 +174,7 @@ void * yasc (void * arg)
 				}
 			}
 			}else{
-			
+				/* COMMANDS*/
 				switch(ctemp){
 					case 'I':
 						FreeStack(&stack);
@@ -182,7 +195,6 @@ void * yasc (void * arg)
 						}
 						break;
 					case 'R':
-						/*não estou certo de que seja isto o pretendido*/
 						if(DepthStack(&stack)==1){
 							nsend = PopStack(&stack);
 							printf("O resultado é: %d\n", nsend);
@@ -217,6 +229,7 @@ void * yasc (void * arg)
 						nsend = 0;
 				}
 			}
+		/*WRITING and READING*/
 		convert_send(nsend, tosend->data);
 		tosend->op = csend;
 		n = write(newsockfd, tosend, sizeof(package));
@@ -237,7 +250,7 @@ void * yasc (void * arg)
 	}
 	
 	out:
-		printf("Thread vai fechar o seu socket\n");
+		printf("Thread will close its socket\n");
 		close(newsockfd);
 		self->socket = 0;
 		/* CLEANING */
