@@ -10,6 +10,7 @@
 
 int pool_no;
 int free_cnt;
+pthread_mutex_t poolmux;
 
 typedef struct s_pool{
 	pthread_t * thread;

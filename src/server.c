@@ -37,6 +37,7 @@ void display_client_info(){
 	aux=first_pool_node;
 	addrlen=sizeof(sockinfo);
 	printf("Clients Info:\n");
+	pthread_mutex_lock(&poolmux);
 	while(aux!= NULL){
 		if(aux->socket!=0)
 		{
@@ -48,6 +49,7 @@ void display_client_info(){
 		}
 		aux=aux->next;
 	}
+	pthread_mutex_unlock(&poolmux);
 }
 
 void treatment (int sigNumb){
@@ -90,13 +92,13 @@ void * servadmin (){
 
 DESCRIPTION: 
 this function is not associated with any particular thread as it is called only once by the main function in order to initialize the thread_pool; before such measures have been taken the server will be unable to cope with client requests
+Since the server administration thread isn't running yet, only one thread is working on the pool, therefore no race conditions exist.
 */
 void threadpool (){
 
 	int i;
 	pool_no = POOL_INIT;
 	first_pool_node = create_pool();
-	
 	for(i=0; i< pool_no; i++){
 		create_pool_node(&first_pool_node, 1);
 	}	
