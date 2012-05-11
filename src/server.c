@@ -128,8 +128,8 @@ void threadpool (){
 
 void mainthread_kill(void * arg)
 {
-	pthread_t ** manager=(pthread_t **) arg;
-	pthread_cancel(**manager);
+	pthread_t * manager=(pthread_t *) arg;
+	pthread_cancel(*manager);
 }
 /*Server
 
@@ -153,13 +153,11 @@ int main(int argc, char *argv[])
 	create_fifo(&front, &back);
 
 /* POOL MANAGER */
-	pthread_t * poolman_t;
-	poolman_t = (pthread_t *) malloc (1*sizeof(pthread_t));
+	pthread_t poolman_t;
 	
 /* SERVADMIN */
 	mainthread = pthread_self();
-	pthread_t * servadmin_t;
-	servadmin_t = (pthread_t *) malloc (1*sizeof(pthread_t));
+	pthread_t servadmin_t;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 	pthread_cleanup_push(mainthread_kill,(void*)&poolman_t);
 	
@@ -190,8 +188,8 @@ int main(int argc, char *argv[])
      clilen = sizeof(cli_addr);
      
      threadpool(); /* creates threadpool */
-	 pthread_create(servadmin_t, NULL, servadmin, NULL);
-	 pthread_create(poolman_t, NULL, manager, NULL);
+	 pthread_create(&servadmin_t, NULL, servadmin, NULL);
+	 pthread_create(&poolman_t, NULL, manager, NULL);
 
 	 
 	 sem_init(&sem_fifo_used, 0, 0);
