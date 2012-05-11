@@ -31,10 +31,9 @@ void treatment_kill(void * arg)
 	pool_node * self;
 	self= (pool_node *) arg;
 	FreeStack(self->stack);
-	printf("Thread %d will die;\n", self->thread);
 	pthread_mutex_lock(&active_thread_mux);
 	active_threads--;
-	pthread_mutex_lock(&active_thread_mux);
+	pthread_mutex_unlock(&active_thread_mux);
 
 }
 
