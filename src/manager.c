@@ -15,17 +15,13 @@ Arguments: this function must receive a pointer to an integer containing the tim
 /* Esta função deverá estar integrada no .c e .h referente às estruturas de dados*/
 
 void * manager ( void * arg){
-<<<<<<< HEAD
+
 	int old_cancel_type;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
-	
-
-=======
 	int current_time;
 	int pool_avg, fifo_avg;
 	int tol;
-	
->>>>>>> bec40b28c1c68ab6a8e686a90a6639241adc8758
+
 	while(1){
 		sleep(1);
 		current_time = time(NULL);
