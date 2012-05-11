@@ -4,6 +4,9 @@
 
 #include "stack.h"
 #include "pthread.h"
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #define POOL_INIT 1
 #define MIN_POOL 1
 #define MAX_POOL 5
@@ -31,9 +34,10 @@ pool_node * first_pool_node;
 void remove_pool(pool_node ** first);
 void create_pool_node(pool_node ** first, int flag);
 pool_node * create_pool();
-void remove_pool_node(pool_node *);
+void free_pool_node(pool_node *);
+void remove_pool_node(pool_node **,pool_node *);
 int pool_time_avg(pool_node ** first, int current_time);
-
+void display_client_info(pool_node *);
 #endif
 
 

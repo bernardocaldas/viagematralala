@@ -29,28 +29,6 @@ FUNCTION: display_client_info
 DESCRIPTION:
 This is a subfunction of the server administration tool that goes through all the threads in the 'pool' and prints their hostname, IP and current Stack.
 */
-void display_client_info(){
-	pool_node *aux;
-	struct sockaddr_in sockinfo;
-	int addrlen;
-	
-	aux=first_pool_node;
-	addrlen=sizeof(sockinfo);
-	printf("Clients Info:\n");
-	pthread_mutex_lock(&poolmux);
-	while(aux!= NULL){
-		if(aux->socket!=0)
-		{
-			getpeername(aux->socket,(struct sockaddr *)&sockinfo,&addrlen);
-			printf("Client with IP address %s and the following stack contents:",inet_ntoa(sockinfo.sin_addr));
-			pthread_mutex_lock(&(aux->stackmux));
-			PrintStack(aux->stack);
-			pthread_mutex_unlock(&(aux->stackmux));
-		}
-		aux=aux->next;
-	}
-	pthread_mutex_unlock(&poolmux);
-}
 
 void server_cleanup (){
 
@@ -83,10 +61,10 @@ void * servadmin (){
 	while(fgets(buffer,LEN,stdin)!=NULL){
 	if(sscanf(buffer, "%c%s", &ctemp, lixo)==1){
 		if(ctemp=='M'){
-			display_client_info();
+			display_client_info(first_pool_node);
 		}
 		else if(ctemp=='F'){
-		server_cleanup();
+			server_cleanup();
 		/*raise(SIGUSR1);*/
 		/*TEMP exit(1);*/
 		}

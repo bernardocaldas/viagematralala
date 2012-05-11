@@ -96,3 +96,25 @@ int pool_time_avg(pool_node ** first, int current_time){
 	return total/active_threads;
 }
 
+void display_client_info(pool_node * first){
+	pool_node *aux;
+	struct sockaddr_in sockinfo;
+	int addrlen;
+	
+	aux=first;
+	addrlen=sizeof(sockinfo);
+	printf("Clients Info:\n");
+	pthread_mutex_lock(&poolmux);
+	while(aux!= NULL){
+		if(aux->socket!=0)
+		{
+			getpeername(aux->socket,(struct sockaddr *)&sockinfo,&addrlen);
+			printf("Client with IP address %s and the following stack contents:",inet_ntoa(sockinfo.sin_addr));
+			pthread_mutex_lock(&(aux->stackmux));
+			PrintStack(aux->stack);
+			pthread_mutex_unlock(&(aux->stackmux));
+		}
+		aux=aux->next;
+	}
+	pthread_mutex_unlock(&poolmux);
+}
