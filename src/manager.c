@@ -12,13 +12,13 @@ Arguments: this function must receive a pointer to an integer containing the tim
 #include "fifo.h"
 #include "pool.h"
 
-
-
 /* Esta função deverá estar integrada no .c e .h referente às estruturas de dados*/
 
 void * manager ( void * arg){
+	int old_cancel_type;
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 	
-	
+
 	while(1){
 		sleep(1);
 		if(fifo_count > 2/3*MAX_FIFO)

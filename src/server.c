@@ -22,7 +22,7 @@ Authors:
 #include "protocol.h"
 #include "manager.h"
 
-
+pthread_t mainthread;
 /* 
 FUNCTION: display_client_info
 
@@ -52,20 +52,29 @@ void display_client_info(){
 	pthread_mutex_unlock(&poolmux);
 }
 
-void treatment (int sigNumb){
-	printf("Signal received\n");
+void server_cleanup (){
 	pool_node *aux, *aux2;
 	pthread_mutex_lock(&poolmux);
 	aux=first_pool_node;
 	while(aux!= NULL){
 		if(aux->thread!=NULL)
+		{
+			printf("Thread %d will die;\n", aux->thread);
 			pthread_cancel(*(aux->thread));
+			pthread_join(*(aux->thread),NULL);
+		}
 		aux2=aux->next;
 		remove_pool_node(aux);
 		aux=aux2;
 	}
 	pthread_mutex_unlock(&poolmux);
-	/*Temp*/ exit(0);
+	pthread_mutex_lock(&mux);
+	FreeFifo(&front);
+	pthread_cancel(mainthread);
+	pthread_mutex_unlock(&mux);
+	printf("Cleanup finished. Bye!\n");
+	pthread_exit(0);
+	
 }
 
 /*
@@ -86,7 +95,8 @@ void * servadmin (){
 			display_client_info();
 		}
 		else if(ctemp=='F'){
-		raise(SIGUSR1);
+		server_cleanup();
+		/*raise(SIGUSR1);*/
 		/*TEMP exit(1);*/
 		}
 		else{
@@ -116,6 +126,11 @@ void threadpool (){
 	}	
 }
 
+void mainthread_kill(void * arg)
+{
+	pthread_t ** manager=(pthread_t **) arg;
+	pthread_cancel(**manager);
+}
 /*Server
 
 DESCRIPTION: 
@@ -125,25 +140,28 @@ The FIFO queue is protected by a mutex to avoid problems between pool_threads an
 
 */
 
-
 int main(int argc, char *argv[])
 {
 /* MUTEX */
 	pthread_mutex_init(&mux, NULL);
 
 /*SIGNALS*/
-	signal(SIGUSR1,treatment);
-	
+	/*signal(SIGUSR1,treatment);*/
+	int old_cancel_type;
 /* FIFO */
 	create_fifo(&front, &back);
 
-/* SERVADMIN */
-	pthread_t * servadmin_t;
-	servadmin_t = (pthread_t *) malloc (1*sizeof(pthread_t));
-	
 /* POOL MANAGER */
 	pthread_t * poolman_t;
 	poolman_t = (pthread_t *) malloc (1*sizeof(pthread_t));
+	
+/* SERVADMIN */
+	mainthread = pthread_self();
+	pthread_t * servadmin_t;
+	servadmin_t = (pthread_t *) malloc (1*sizeof(pthread_t));
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
+	pthread_cleanup_push(mainthread_kill,(void*)&poolman_t);
+	
 /* SOCKETS */
      int sockfd, newsockfd, portno;
      socklen_t clilen;
@@ -192,5 +210,6 @@ int main(int argc, char *argv[])
         pthread_mutex_unlock(&mux);
      }
      close(sockfd);
+     pthread_cleanup_pop(0);
      return 0; 
 }

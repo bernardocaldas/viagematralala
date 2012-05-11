@@ -31,8 +31,6 @@ void treatment_kill(void * arg)
 	pool_node * self;
 	self= (pool_node *) arg;
 	FreeStack(self->stack);
-	printf("Thread %d will die;\n", self->thread);
-
 
 }
 

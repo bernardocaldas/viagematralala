@@ -6,7 +6,7 @@
 #include "pthread.h"
 #define POOL_INIT 1
 #define MIN_POOL 1
-#define MAX_POOL 3
+#define MAX_POOL 5
 
 int pool_no;
 int free_cnt;

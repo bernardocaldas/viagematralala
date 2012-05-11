@@ -36,3 +36,15 @@ void queue (fifo_node ** front, fifo_node ** back, int socket) {
 	*back = new;
 	printf("Pus na queue o new no. %X\n", (int)new);
 }
+
+void FreeFifo(fifo_node ** front){
+	fifo_node * aux1, *aux2;
+	aux1=*front;
+	aux2=*front;
+	while(aux1!=NULL)
+	{
+		aux2=aux1->next;
+		remove_pool_node(aux1);
+		aux1=aux2;
+	}
+}
