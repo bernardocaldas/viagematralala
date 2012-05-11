@@ -121,6 +121,7 @@ int main(int argc, char *argv[])
 /* FIFO */
 	create_fifo(&front, &back);
 	fifo_count = 0;
+	item_server * item;
 
 /* POOL MANAGER */
 	pthread_t poolman_t;
@@ -168,11 +169,15 @@ int main(int argc, char *argv[])
 	 while(1){
 	 	sem_wait(&sem_fifo_free);
      	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-     	if (newsockfd < 0) 
+     	if (newsockfd < 0){
           perror("ERROR on accept");
+        }
+        item = (item_server*)malloc(1*sizeof(item_server));
+        item->socket = newsockfd;
+        item->time = time(NULL);
         pthread_mutex_lock(&mux);
         /* Entering Critical FIFO Region*/
-	    queue (&front ,&back, newsockfd);
+	    queue (&front ,&back, item);
 	    sem_post(&sem_fifo_used);
         fifo_count++;
         /* Exiting Critical FIFO Region*/

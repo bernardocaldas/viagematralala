@@ -6,9 +6,19 @@
 
 #define MAX_FIFO 1
 
-typedef struct s_node{
+typedef struct s_item_server{
 	int socket;
 	int time;
+}item_server;
+
+typedef struct s_item_client{
+
+
+}item_client;
+
+
+typedef struct s_node{
+	void * item;
 	struct s_node * next;
 }fifo_node;
 
@@ -21,8 +31,8 @@ int fifo_count;
 
 
 void create_fifo(fifo_node ** front, fifo_node ** back);
-int dequeue(fifo_node ** front, fifo_node ** back);
-void queue (fifo_node ** front, fifo_node ** back, int socket);
+void * dequeue(fifo_node ** front, fifo_node ** back);
+void queue (fifo_node ** front, fifo_node ** back, void * item);
 int fifo_time_avg(fifo_node ** back, int current_time);
 
 

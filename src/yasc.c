@@ -41,6 +41,9 @@ void treatment_kill(void * arg)
 
 void * yasc (void * arg)
 {	
+	/*Fifo*/
+	int newsockfd;
+	item_server * item;
 	/*Thread*/
 	pool_node * self;
     struct timespec timer;
@@ -48,7 +51,7 @@ void * yasc (void * arg)
 	Stack * stack;
 	char ctemp, csend;
 	int itemp,opA,opB,opResult, top, nsend, depth;
-	int newsockfd, n;
+	int n;
     package * torecv, *tosend;
 
     
@@ -80,7 +83,7 @@ void * yasc (void * arg)
 	}
 		pthread_mutex_lock(&mux);
 		/* Entering Critical Region */
-		newsockfd = dequeue(&front,&back);
+		item =(item_server*) dequeue(&front,&back);
 		sem_post(&sem_fifo_free);
 		fifo_count--;
 		/* Exiting Critcal Region */
@@ -90,8 +93,10 @@ void * yasc (void * arg)
 		active_threads++;
 		pthread_mutex_unlock(&active_thread_mux);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
-		self->socket = newsockfd;
-		self->time = time(NULL);
+		
+		newsockfd = item->socket;
+		self->socket = item->socket;
+		self->time = item->time;
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));

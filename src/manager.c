@@ -36,7 +36,7 @@ void * manager ( void * arg){
 		
 			printf("avg pool time: %d avg fifo time %d\n", pool_avg, fifo_avg);
 		
-			/* average waiting time in pool is bigger than the average waiting time in the fifo (plus a tolerance)*/
+			/* average waiting time in pool is bigger than the average waiting time in the fifo*/
 			if(pool_avg>fifo_avg){
 				pthread_mutex_lock(&poolmux);
 				create_pool_node (&first_pool_node, 0);
