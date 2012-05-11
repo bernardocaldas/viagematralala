@@ -46,7 +46,7 @@ void FreeFifo(fifo_node ** front){
 	while(aux1!=NULL)
 	{
 		aux2=aux1->next;
-		remove_pool_node(aux1);
+		remove_fifo_node(aux1);
 		aux1=aux2;
 	}	
 }
@@ -68,4 +68,8 @@ int fifo_time_avg(fifo_node ** back, int current_time){
 	}
 	
 	return  total/fifo_count;
+}
+void remove_fifo_node(fifo_node aux)
+{
+
 }

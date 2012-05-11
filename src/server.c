@@ -22,7 +22,6 @@ Authors:
 #include "protocol.h"
 #include "manager.h"
 
-pthread_t mainthread;
 /* 
 FUNCTION: display_client_info
 
@@ -30,7 +29,7 @@ DESCRIPTION:
 This is a subfunction of the server administration tool that goes through all the threads in the 'pool' and prints their hostname, IP and current Stack.
 */
 
-void server_cleanup (){
+void server_cleanup (pthread_t mainthread){
 
 	pthread_mutex_lock(&poolmux);
 	remove_pool(&first_pool_node);
@@ -54,7 +53,8 @@ Function that is run by a particular thread that is always available for input v
 	- F: closes the server and frees all its memory;
 	- M: displays info of the machines attached to the server at the current moment;
 */
-void * servadmin (){
+void * servadmin (void * arg){
+	pthread_t main_thread_t = *((pthread_t *) arg);
 	char buffer[LEN],lixo[LEN],ctemp;
 	bzero(buffer,LEN+1);
 	printf("Insert command: \n");
@@ -64,7 +64,7 @@ void * servadmin (){
 			display_client_info(first_pool_node);
 		}
 		else if(ctemp=='F'){
-			server_cleanup();
+			server_cleanup(main_thread_t);
 		/*raise(SIGUSR1);*/
 		/*TEMP exit(1);*/
 		}
@@ -127,7 +127,6 @@ int main(int argc, char *argv[])
 	pthread_t poolman_t;
 	
 /* SERVADMIN */
-	mainthread = pthread_self();
 	pthread_t servadmin_t;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 	pthread_cleanup_push(mainthread_kill,(void*)&poolman_t);
@@ -159,7 +158,8 @@ int main(int argc, char *argv[])
      clilen = sizeof(cli_addr);
      
      threadpool(); /* creates threadpool */
-	 pthread_create(&servadmin_t, NULL, servadmin, NULL);
+     	 pthread_t main_thread = pthread_self();
+	 pthread_create(&servadmin_t, NULL, servadmin, (void *)&(main_thread));
 	 pthread_create(&poolman_t, NULL, manager, NULL);
 
 	 
