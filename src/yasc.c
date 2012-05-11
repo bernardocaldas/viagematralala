@@ -83,7 +83,7 @@ void * yasc (void * arg)
 	}
 		pthread_mutex_lock(&mux);
 		/* Entering Critical Region */
-		item =(item_server*) dequeue(&front,&back);
+		item =(item_server*) dequeue(&front_server,&back_server);
 		sem_post(&sem_fifo_free);
 		fifo_count--;
 		/* Exiting Critcal Region */

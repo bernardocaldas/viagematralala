@@ -36,7 +36,7 @@ void server_cleanup (pthread_t mainthread){
 	pthread_mutex_unlock(&poolmux);
 	
 	pthread_mutex_lock(&mux);
-	FreeFifo(&front);
+	FreeFifo(&front_server);
 	pthread_cancel(mainthread);
 	pthread_mutex_unlock(&mux);
 	
@@ -119,7 +119,7 @@ int main(int argc, char *argv[])
 	/*signal(SIGUSR1,treatment);*/
 	int old_cancel_type;
 /* FIFO */
-	create_fifo(&front, &back);
+	create_fifo(&front_server, &back_server);
 	fifo_count = 0;
 	item_server * item;
 
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
         item->time = time(NULL);
         pthread_mutex_lock(&mux);
         /* Entering Critical FIFO Region*/
-	    queue (&front ,&back, item);
+	    queue (&front_server ,&back_server, item);
 	    sem_post(&sem_fifo_used);
         fifo_count++;
         /* Exiting Critical FIFO Region*/

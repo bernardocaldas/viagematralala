@@ -38,6 +38,10 @@ void queue (fifo_node ** front, fifo_node ** back, void * item) {
 	printf("Pus na queue o new no. %X\n", (int)new);
 }
 
+void remove_fifo_node(fifo_node * aux)
+{
+
+}
 
 void FreeFifo(fifo_node ** front){
 	fifo_node * aux1, *aux2;
@@ -69,7 +73,4 @@ int fifo_time_avg(fifo_node ** back, int current_time){
 	
 	return  total/fifo_count;
 }
-void remove_fifo_node(fifo_node aux)
-{
 
-}

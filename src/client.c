@@ -37,10 +37,79 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
+#include <pthread.h>
 #include "protocol.h"
+#include "fifo.h"
 
 
 #define MAX_CONNECT 5 /* defines maximum connection attempts */
+#define DEBUG_I 0
+#define SOCKET_I 1
+
+sem_t fifo_cnt;
+pthread_mutex_t fifo;
+fifo_node * front;
+fifo_node * back;
+
+void * write_read ( void * arg){
+	int n;
+	int ntemp;
+	char ctemp;
+	int sockfd;
+	int debug;
+	int * aux;
+	package * tosend, *torecv; 
+	
+    torecv = (package*) malloc(sizeof(package));
+    
+    aux = (int*) arg;
+    debug = aux[DEBUG_I];
+    sockfd = aux[SOCKET_I];
+    
+	while(1){
+		sem_wait(&fifo_cnt);
+		pthread_mutex_lock(&fifo);
+		tosend = (package *) dequeue(&front, &back);
+		pthread_mutex_unlock(&fifo);
+		
+		ctemp = tosend->op;
+		
+		
+		/* WRITING and READING operations*/
+		n = write(sockfd,tosend,sizeof(package));
+		if (n <= 0){
+		  perror("ERROR writing to socket\n");
+		  /* CLEAN */
+		  exit(-4);
+		 }
+		/* if command 'K' is given the client writes to the socket and then terminates without waiting for an answer*/
+		if(ctemp == 'K' ){ 
+			printf("Client closing\n");
+			/* CLEAN */
+			exit(1);
+		}
+	
+		if(ctemp == 'G'){
+			debug = !debug;
+		}
+		
+		n = read(sockfd,torecv,sizeof(package));
+		if(n<= 0){
+		  perror("ERROR reading from socket\n");
+		  /* CLEAN */
+		  exit(-4);
+		}
+		if (debug == 1){
+			if(tosend->op == 'D')
+				printf("%c%d=>",tosend->op, convert_recv(tosend->data));
+			else
+				printf("%c=>", tosend->op);
+				printf("%c %d\n",torecv->op, convert_recv(torecv->data));
+		}
+		
+		free(tosend);
+	}
+}
 
 void clean ( struct hostent * server, package * tosend, package * torecv, FILE * file){
 /* CLEANING */
@@ -59,7 +128,6 @@ int main(int argc, char *argv[])
     struct hostent *server;
     int connect_cnt, aux_connect;
     /*Communication*/
-    package * tosend, *torecv;
     char delims[3]={' ',';','\n'};
     char * result;
     char buffer[LEN+1];
@@ -67,9 +135,18 @@ int main(int argc, char *argv[])
     FILE * file;
     char ctemp;
     int n, ntemp, aux;
+    package * tosend;
     /*Flags*/
     int debug = 0;
     int init = 0;
+    int write_enable = 0;
+    /*Fifo*/
+    item_client * item;
+    pthread_mutex_init(&fifo, NULL);
+    create_fifo ( &front, &back);
+    sem_init (&fifo_cnt, 0,0);
+    pthread_t wr_thread;
+    int wr_arg[2];
 	
 	/* CONECTION WITH SERVER */
     if (argc < 3) {
@@ -120,18 +197,20 @@ int main(int argc, char *argv[])
 
 	/* COMMUNICATION CYCLE */
 	printf("To initialize communication session press 'I'\nTo terminate current session press 'K'\n");
-	tosend = (package*) malloc(sizeof(package));
-    torecv = (package*) malloc(sizeof(package));
+    tosend = (package*) malloc(sizeof(package));
     
 	bzero(buffer,LEN+1);
 	while(fgets(buffer,LEN,file)!=NULL){
 		result=strtok((char*)buffer,delims);
 		while (result != NULL){
+			write_enable = 0;
 			/* INITIALIZING SESSION */
 			if(init == 0){
 				if(sscanf(result,"%c%s", &ctemp, lixo)==1){
+					/*Client closes without waiting for server response*/
 					if(ctemp == 'K' ){
 						printf("Client closing\n");
+						/*CLEAN*/
 						exit(0);
 					}
 					if(ctemp == 'G'){
@@ -140,6 +219,11 @@ int main(int argc, char *argv[])
 					if(ctemp == 'I'){
 						printf("Communication session has been initialized; to enter debug mode press 'G'\n");
 						init = 1;
+						/* to minimize the use of global variables the socket file descriptor and the debug flag will be sent via argument to the write_read thread */
+						wr_arg[DEBUG_I] = debug;
+						wr_arg[SOCKET_I] = sockfd;
+						pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
+						
 					}else{
 						printf("WARNING please press 'I' to initialize the session\n");
 					}
@@ -148,53 +232,39 @@ int main(int argc, char *argv[])
 				}
 			}
 			if(init==1){
+
 				/* SENDING OPERAND CHAR*/
 				if(sscanf(result, "%d%s", &ntemp, lixo)==1){
 					convert_send(ntemp, tosend->data);
 					tosend->op = 'D';
+					write_enable = 1;
 				} else {
 					/*SENDING DATA*/
 					if(sscanf(result, "%c%s", &ctemp, lixo)==1){
-						if(ctemp == 'G'){
-							debug = !debug;
+						/* the only characters accepted by the client and written in the socket are the ones defined in the protocol*/
+						if(ctemp == 'I'|| ctemp == 'P'|| ctemp == 'R'|| ctemp == 'T'|| ctemp == 'K' || ctemp == 'G'||ctemp == '+'||ctemp == '-'||ctemp == '*'||ctemp == '%'||ctemp == '/'){
+							convert_send(0, tosend->data);
+							tosend->op = ctemp;	
+							write_enable = 1;
+						}else{
+							printf("WARNING please insert a valid command\n");
 						}
-						if(ctemp == 'D'){ /* O caracter 'D' não deve ser introduzido pelo utilizador*/
-							ctemp = 'E';
-						} 
-						convert_send(0, tosend->data);
-						tosend->op = ctemp;	
-					} else {
-					/* TODO cliente deve enviar para servidor tudo o que lhe aparece à frente ou deverá existir um sort à partida para além do 'lixo' que já não é comtemplado */
-						break;
+					}else{
+						printf("WARNING please insert a valid command\n");
 					}
-				}
-				/* WRITING and READING operations*/
-				n = write(sockfd,tosend,sizeof(package));
-				if (n <= 0){
-				  perror("ERROR writing to socket\n");
-				  clean (server,tosend, torecv, file);
-				  exit(-4);
-				 }
-				/* if command 'K' is given the client closes without waiting for an answer*/
-				if(ctemp == 'K' ){ 
-					printf("Client closing\n");
-					return 1;
+
 				}
 				
-				n = read(sockfd,torecv,sizeof(package));
-				if(n<= 0){
-				  perror("ERROR reading from socket\n");
-				  clean (server,tosend, torecv, file);
-				  exit(-4);
-				}
-				if (debug == 1){
-					if(tosend->op == 'D')
-						printf("%c%d=>",tosend->op, ntemp);
-					else
-						printf("%c=>", tosend->op);
-						printf("%c %d\n",torecv->op, convert_recv(torecv->data));
-				}
+				if(write_enable == 1){
+					item = (item_client*)malloc(1*sizeof(item_client));
+					item->tosend = *tosend;
+					item->ntemp = ntemp;
 				
+					pthread_mutex_lock(&fifo);
+					queue(&front, &back, item);
+					pthread_mutex_unlock(&fifo);
+					sem_post(&fifo_cnt);
+				}
 			}
 			result = strtok(NULL, delims);
 		}
@@ -202,6 +272,5 @@ int main(int argc, char *argv[])
     }
     close(sockfd);
     /* CLEANING */
-    clean (server,tosend, torecv, file);
     return 0;
 }

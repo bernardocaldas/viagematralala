@@ -3,7 +3,7 @@
 
 #include <semaphore.h>
 #include <pthread.h>
-
+#include <protocol.h>
 #define MAX_FIFO 1
 
 typedef struct s_item_server{
@@ -12,8 +12,9 @@ typedef struct s_item_server{
 }item_server;
 
 typedef struct s_item_client{
-
-
+	package tosend;
+	/* the structure contains this element to prevent further conversions from ASCII to integer and viceversa */
+	int ntemp;
 }item_client;
 
 
@@ -25,8 +26,8 @@ typedef struct s_node{
 sem_t sem_fifo_used;
 sem_t sem_fifo_free;
 pthread_mutex_t mux;
-fifo_node * front;
-fifo_node * back;
+fifo_node * front_server;
+fifo_node * back_server;
 int fifo_count;
 
 
