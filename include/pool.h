@@ -10,7 +10,10 @@
 
 int pool_no;
 int free_cnt;
+int active_threads;
+
 pthread_mutex_t poolmux;
+pthread_mutex_t active_thread_mux;
 
 typedef struct s_pool{
 	pthread_t * thread;
@@ -29,6 +32,7 @@ void remove_pool(pool_node ** first);
 void create_pool_node(pool_node ** first, int flag);
 pool_node * create_pool();
 void remove_pool_node(pool_node *);
+int pool_time_avg(pool_node ** first, int current_time);
 
 #endif
 

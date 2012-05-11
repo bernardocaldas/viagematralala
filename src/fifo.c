@@ -37,6 +37,7 @@ void queue (fifo_node ** front, fifo_node ** back, int socket) {
 	printf("Pus na queue o new no. %X\n", (int)new);
 }
 
+<<<<<<< HEAD
 void FreeFifo(fifo_node ** front){
 	fifo_node * aux1, *aux2;
 	aux1=*front;
@@ -47,4 +48,21 @@ void FreeFifo(fifo_node ** front){
 		remove_pool_node(aux1);
 		aux1=aux2;
 	}
+=======
+int fifo_time_avg(fifo_node ** back, int current_time){
+	fifo_node * aux;
+	aux = *back;
+	int total = 0;
+	
+	while(aux!=NULL){
+		total = total + (current_time-aux->time);
+		aux=aux->next;
+	}	
+	
+	if(fifo_count == 0){
+		return 0;
+	}
+	
+	return  total/fifo_count;
+>>>>>>> bec40b28c1c68ab6a8e686a90a6639241adc8758
 }
