@@ -54,6 +54,18 @@ void display_client_info(){
 
 void treatment (int sigNumb){
 	printf("Signal received\n");
+	pool_node *aux, *aux2;
+	pthread_mutex_lock(&poolmux);
+	aux=first_pool_node;
+	while(aux!= NULL){
+		if(aux->thread!=NULL)
+			pthread_cancel(*(aux->thread));
+		aux2=aux->next;
+		remove_pool_node(aux);
+		aux=aux2;
+	}
+	pthread_mutex_unlock(&poolmux);
+	/*Temp*/ exit(0);
 }
 
 /*
@@ -75,7 +87,7 @@ void * servadmin (){
 		}
 		else if(ctemp=='F'){
 		raise(SIGUSR1);
-		/*TEMP*/ exit(1);
+		/*TEMP exit(1);*/
 		}
 		else{
 		printf("Please insert valid commands\n");

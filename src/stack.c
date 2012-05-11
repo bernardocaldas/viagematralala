@@ -42,13 +42,16 @@ int DepthStack(Stack ** top)
 
 void FreeStack (Stack ** top){
 	Stack * aux, * temp;
-	aux = (*top);
-	while(aux!=NULL){
+	if(top!=NULL)
+	{
+		aux = (*top);
+		while(aux!=NULL){
 		temp = aux;
 		aux = aux->next;
 		free(temp);
+		}
+		(*top) = NULL;
 	}
-	(*top) = NULL;
 
 }
 

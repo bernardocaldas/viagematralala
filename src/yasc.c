@@ -22,9 +22,19 @@ If the client decides to abandon the session this thread will block until a new 
 #include "pool.h"
 #include "fifo.h"
 #include <unistd.h>
+#include <signal.h>
 
 #define WAIT_TIME 60
 
+void treatment_kill(void * arg)
+{
+	pool_node * self;
+	self= (pool_node *) arg;
+	FreeStack(self->stack);
+	printf("Thread %d will die;\n", self->thread);
+
+
+}
 
 
 void * yasc (void * arg)
@@ -36,27 +46,32 @@ void * yasc (void * arg)
 	Stack * stack;
 	char ctemp, csend;
 	int itemp,opA,opB,opResult, top, nsend, depth;
-    int newsockfd, n;
+	int newsockfd, n;
     package * torecv, *tosend;
 
     
-    self = (pool_node *)malloc(1*sizeof(pool_node));
+    self = (pool_node *)malloc(1*sizeof(pool_node)); /*Esta linha é precisa?*/
     self = (pool_node *)arg;
-   
+    /*Cleanup*/
+    int old_cancel_type;
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
+    pthread_cleanup_push(treatment_kill,(void*)self);
     
     while(1){
-    	/*NON-PERMANENT THREAD*/
+    		/*NON-PERMANENT THREAD*/
     	if(self->flag == 0){
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
-			if(sem_timedwait(&sem_fifo_used, &timer)==-1){;
+			if(sem_timedwait(&sem_fifo_used, &timer)==-1){
 				printf("Thread will die; sem_out %d\n", n);
 				pthread_exit(NULL);
 			}
-		}else{
+	}else{
 		/*PERMANENT THREAD*/
-			sem_wait(&sem_fifo_used);
-		}
+		pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type); 
+		/*The thread can't be canceled while holding the lock, or else it would be impossible to clean the queue (and an error would be thrown if someone tried to lock it)*/
+	sem_wait(&sem_fifo_used);
+	}
 		pthread_mutex_lock(&mux);
 		/* Entrada Regiao Critica */
 		newsockfd = dequeue(&front,&back);
@@ -64,6 +79,7 @@ void * yasc (void * arg)
 		fifo_count--;
 		/* Saida Regiao Critica */
 		pthread_mutex_unlock(&mux);
+		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 		self->socket = newsockfd;
 		
 		torecv = (package*) malloc(sizeof(package));
@@ -285,5 +301,7 @@ void * yasc (void * arg)
 		pthread_mutex_unlock(&(self->stackmux));
 
 	}
+	pthread_cleanup_pop(0);
+	return NULL;
 }
 

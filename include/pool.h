@@ -25,10 +25,10 @@ typedef struct s_pool{
 pool_node * first_pool_node;
 
 
-void remove_list();
+void remove_pool(pool_node ** first);
 void create_pool_node(pool_node ** first, int flag);
 pool_node * create_pool();
-void remove_pool_node();
+void remove_pool_node(pool_node *);
 
 #endif
 

@@ -37,12 +37,23 @@ void create_pool_node(pool_node ** first, int flag){
 	
 }
 
-void remove_list(){
-/* FAAAAAAALTA!!!!!*/
+void remove_pool(pool_node ** first){
+	pool_node * aux1, *aux2;
+	aux1=*first;
+	aux2=*first;
+	while(aux1!=NULL)
+	{
+		aux2=aux1->next;
+		remove_pool_node(aux1);
+		aux1=aux2;
+	}
 
 }
 
-void remove_pool_node(){
+void remove_pool_node(pool_node * node){
+	FreeStack(node->stack);
+	free(node->thread);
+	free(node);
 
 }
 
