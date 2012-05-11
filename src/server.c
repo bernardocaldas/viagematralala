@@ -151,6 +151,7 @@ int main(int argc, char *argv[])
 	int old_cancel_type;
 /* FIFO */
 	create_fifo(&front, &back);
+	fifo_count = 0;
 
 /* POOL MANAGER */
 	pthread_t * poolman_t;

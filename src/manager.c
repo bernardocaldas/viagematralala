@@ -37,7 +37,7 @@ void * manager ( void * arg){
 			printf("avg pool time: %d avg fifo time %d\n", pool_avg, fifo_avg);
 		
 			/* average waiting time in fifo is bigger than the average waiting time in the pool (plus a tolerance)*/
-			if(fifo_avg>(pool_avg+tol)){
+			if(pool_avg>fifo_avg){
 				pthread_mutex_lock(&poolmux);
 				create_pool_node (&first_pool_node, 0);
 				pool_no++;
@@ -46,12 +46,10 @@ void * manager ( void * arg){
 			/*if the FIFO is overcrowded but the average waiting time does not surpasses the tolerance we also create a new pool_node*/
 			else{
 				if(fifo_count > 2/3*MAX_FIFO){
-					pthread_mutex_lock(&poolmux);
 					if(pool_no<MAX_POOL){
 						create_pool_node (&first_pool_node, 0);
 						pool_no++;
 					}
-					pthread_mutex_unlock(&poolmux);
 				}
 			}
 		}
