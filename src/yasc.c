@@ -59,17 +59,21 @@ void * yasc (void * arg)
     pthread_cleanup_push(treatment_kill,(void*)self);
     
     while(1){
+    	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type);
     	/*NON-PERMANENT THREAD*/
     	if(self->flag == 0){
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
 			if(sem_timedwait(&sem_fifo_used, &timer)==-1){
 				printf("Thread will die; sem_out %d\n", n);
+				pthread_mutex_lock(&poolmux);
+				remove_pool_node(&first_pool_node,self);
+				pthread_mutex_unlock(&poolmux);
 				pthread_exit(NULL);
 		}
 	}else{
 		/*PERMANENT THREAD*/
-		pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type); 
+		 
 		/*The thread can't be canceled while holding the lock, or else it would be impossible to clean the queue (and an error would be thrown if someone tried to lock it)*/
 		sem_wait(&sem_fifo_used);
 	}
