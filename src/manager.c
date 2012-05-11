@@ -17,12 +17,12 @@ Arguments: this function must receive a pointer to an integer containing the tim
 void * manager ( void * arg){
 
 	int old_cancel_type;
-	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 	int current_time;
 	int pool_avg, fifo_avg;
 	int tol;
 
 	while(1){
+		pthread_testcancel();
 		sleep(1);
 		current_time = time(NULL);
 		if (fifo_count != 0 && active_threads != 0){

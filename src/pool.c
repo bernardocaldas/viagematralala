@@ -41,20 +41,44 @@ void remove_pool(pool_node ** first){
 	pool_node * aux1, *aux2;
 	aux1=*first;
 	aux2=*first;
-	while(aux1!=NULL)
-	{
+	while(aux1!= NULL){
+		if(aux1->thread!=NULL)
+		{
+			printf("Thread %d will die;\n", aux1->thread);
+			pthread_cancel(*(aux1->thread));
+			pthread_join(*(aux1->thread),NULL);
+		}
 		aux2=aux1->next;
-		remove_pool_node(aux1);
+		free_pool_node(aux1);
 		aux1=aux2;
 	}
 
 }
 
-void remove_pool_node(pool_node * node){
+void free_pool_node(pool_node * node){
 	FreeStack(node->stack);
 	free(node->thread);
 	free(node);
 
+}
+
+void remove_pool_node(pool_node **first,pool_node * node){
+	pool_node * aux = *first;
+	if(node==*first)
+	{
+		*first=node->next;
+		free_pool_node(node);
+	}
+	else if(aux!=NULL){
+		while(aux->next!=node)
+		{
+		aux=aux->next;
+		}
+		aux->next=node->next;
+		free_pool_node(node);
+	
+	}
+	
 }
 
 int pool_time_avg(pool_node ** first, int current_time){

@@ -53,25 +53,16 @@ void display_client_info(){
 }
 
 void server_cleanup (){
-	pool_node *aux, *aux2;
+
 	pthread_mutex_lock(&poolmux);
-	aux=first_pool_node;
-	while(aux!= NULL){
-		if(aux->thread!=NULL)
-		{
-			printf("Thread %d will die;\n", aux->thread);
-			pthread_cancel(*(aux->thread));
-			pthread_join(*(aux->thread),NULL);
-		}
-		aux2=aux->next;
-		remove_pool_node(aux);
-		aux=aux2;
-	}
+	remove_pool(&first_pool_node);
 	pthread_mutex_unlock(&poolmux);
+	
 	pthread_mutex_lock(&mux);
 	FreeFifo(&front);
 	pthread_cancel(mainthread);
 	pthread_mutex_unlock(&mux);
+	
 	printf("Cleanup finished. Bye!\n");
 	pthread_exit(0);
 	
