@@ -134,8 +134,9 @@ int main(int argc, char *argv[])
 						printf("Client closing\n");
 						exit(0);
 					}
-					if(ctemp == 'G')
+					if(ctemp == 'G'){
 						debug = !debug;
+					}
 					if(ctemp == 'I'){
 						printf("Communication session has been initialized; to enter debug mode press 'G'\n");
 						init = 1;
@@ -170,7 +171,7 @@ int main(int argc, char *argv[])
 				/* WRITING and READING operations*/
 				n = write(sockfd,tosend,sizeof(package));
 				if (n <= 0){
-				  perror("ERROR writing to socket");
+				  perror("ERROR writing to socket\n");
 				  clean (server,tosend, torecv, file);
 				  exit(-4);
 				 }
@@ -182,7 +183,7 @@ int main(int argc, char *argv[])
 				
 				n = read(sockfd,torecv,sizeof(package));
 				if(n<= 0){
-				  perror("ERROR reading from socket");
+				  perror("ERROR reading from socket\n");
 				  clean (server,tosend, torecv, file);
 				  exit(-4);
 				}
