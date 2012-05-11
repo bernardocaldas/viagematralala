@@ -57,3 +57,18 @@ void remove_pool_node(pool_node * node){
 
 }
 
+int pool_time_avg(pool_node ** first, int current_time){
+	pool_node * aux;
+	aux = *first;
+	int total = 0;
+	
+	while(aux!=NULL){
+		total = total + (current_time-aux->time);
+		aux=aux->next;
+	}	
+	if(pool_no==0)
+		return 0;
+		
+	return total/active_threads;
+}
+

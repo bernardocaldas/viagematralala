@@ -23,6 +23,7 @@ int fifo_count;
 void create_fifo(fifo_node ** front, fifo_node ** back);
 int dequeue(fifo_node ** front, fifo_node ** back);
 void queue (fifo_node ** front, fifo_node ** back, int socket);
+int fifo_time_avg(fifo_node ** back, int current_time);
 
 
 #endif

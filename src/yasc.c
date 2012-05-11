@@ -24,7 +24,7 @@ If the client decides to abandon the session this thread will block until a new 
 #include <unistd.h>
 #include <signal.h>
 
-#define WAIT_TIME 60
+#define WAIT_TIME 10
 
 void treatment_kill(void * arg)
 {
@@ -32,7 +32,9 @@ void treatment_kill(void * arg)
 	self= (pool_node *) arg;
 	FreeStack(self->stack);
 	printf("Thread %d will die;\n", self->thread);
-
+	pthread_mutex_lock(&active_thread_mux);
+	active_threads--;
+	pthread_mutex_lock(&active_thread_mux);
 
 }
 
@@ -58,29 +60,34 @@ void * yasc (void * arg)
     pthread_cleanup_push(treatment_kill,(void*)self);
     
     while(1){
-    		/*NON-PERMANENT THREAD*/
+    	/*NON-PERMANENT THREAD*/
     	if(self->flag == 0){
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
 			if(sem_timedwait(&sem_fifo_used, &timer)==-1){
 				printf("Thread will die; sem_out %d\n", n);
 				pthread_exit(NULL);
-			}
+		}
 	}else{
 		/*PERMANENT THREAD*/
 		pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type); 
 		/*The thread can't be canceled while holding the lock, or else it would be impossible to clean the queue (and an error would be thrown if someone tried to lock it)*/
-	sem_wait(&sem_fifo_used);
+		sem_wait(&sem_fifo_used);
 	}
 		pthread_mutex_lock(&mux);
-		/* Entrada Regiao Critica */
+		/* Entering Critical Region */
 		newsockfd = dequeue(&front,&back);
 		sem_post(&sem_fifo_free);
 		fifo_count--;
-		/* Saida Regiao Critica */
+		/* Exiting Critcal Region */
 		pthread_mutex_unlock(&mux);
+		
+		pthread_mutex_lock(&active_thread_mux);
+		active_threads++;
+		pthread_mutex_unlock(&active_thread_mux);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 		self->socket = newsockfd;
+		self->time = time(NULL);
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
@@ -164,6 +171,7 @@ void * yasc (void * arg)
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA*opB;
+						/*MAX_INT!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 						PushStack(&stack,opResult);
 						pthread_mutex_unlock(&(self->stackmux));
 						printf("%d*%d=%d\n",opA,opB,opResult);

@@ -130,6 +130,7 @@ int main(int argc, char *argv[])
 {
 /* MUTEX */
 	pthread_mutex_init(&mux, NULL);
+	pthread_mutex_init(&active_thread_mux,NULL);
 
 /*SIGNALS*/
 	signal(SIGUSR1,treatment);
