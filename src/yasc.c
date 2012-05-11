@@ -251,27 +251,25 @@ void * yasc (void * arg)
 						pthread_mutex_lock(&(self->stackmux));
 						if(DepthStack(&stack)==1){
 							nsend = PopStack(&stack);
-							pthread_mutex_unlock(&(self->stackmux));
 							printf("O resultado é: %d\n", nsend);
 						}else{
 							printf("Pilha vazia ou com demasiados elementos\n");
 							csend = 'E';
 						}	
+						pthread_mutex_unlock(&(self->stackmux));
 						break;						
 					case 'T':
 						pthread_mutex_lock(&(self->stackmux));
 						if(DepthStack(&stack) == 0){
-							pthread_mutex_unlock(&(self->stackmux));
 							printf("A pilha está vazia\n");
 							csend = 'E';
 						}
 						else{
-							pthread_mutex_lock(&(self->stackmux));
 							nsend = PopStack(&stack);
 							printf("Topo da pilha: %d\n", nsend);
 							PushStack(&stack, nsend);
-							pthread_mutex_unlock(&(self->stackmux));
 						}
+					    pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case 'G':
 						csend = 'V';
