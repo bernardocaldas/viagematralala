@@ -59,7 +59,9 @@ void * write_read ( void * arg){
 	int sockfd;
 	int debug;
 	int * aux;
+
 	package * tosend, *torecv; 
+	item_client *item;
 	
     torecv = (package*) malloc(sizeof(package));
     
@@ -70,9 +72,10 @@ void * write_read ( void * arg){
 	while(1){
 		sem_wait(&fifo_cnt);
 		pthread_mutex_lock(&fifo);
-		tosend = (package *) dequeue(&front, &back);
+		item = (item_client *) dequeue(&front, &back);
 		pthread_mutex_unlock(&fifo);
 		
+		*tosend = item->tosend;
 		ctemp = tosend->op;
 		
 		
@@ -101,20 +104,21 @@ void * write_read ( void * arg){
 		  exit(-4);
 		}
 		if (debug){
-			if(tosend->op == 'D')
+			if(tosend->op == 'D'){
 				printf("%c%d=>",tosend->op, convert_recv(tosend->data));
-			else
+			}else{
 				printf("%c=>", tosend->op);
-				printf("%c %d\n",torecv->op, convert_recv(torecv->data));
+			}
+			printf("%c %d\n",torecv->op, convert_recv(torecv->data));
 		}else{
-			if(torecv->op != 'E'){
+			if(torecv->op != 'E' && torecv->op != 'I'){
 				if(tosend->op == 'T' ||tosend->op == 'P' ||tosend->op == 'R' ){
 					printf("%d\n", convert_recv(torecv->data));
 				}
 			}
 		}
 		
-		free(tosend);
+		free(item);
 	}
 }
 
@@ -135,15 +139,17 @@ int main(int argc, char *argv[])
     struct hostent *server;
     int connect_cnt, aux_connect;
     /*Communication*/
-    char delims[3]={' ',';','\n'};
+    char delims[3]={' ','\n'};
     char * result;
     char buffer[LEN+1];
     char lixo[LEN+1];
     FILE * file;
-    char ctemp;
+    char ctemp, aux_char;
     int n, aux;
     long int ntemp;
     package * tosend;
+    int end_operand = 0;
+    int i;
     /*Flags*/
     int debug = 0;
     int init = 0;
@@ -240,9 +246,10 @@ int main(int argc, char *argv[])
 				}
 			}
 			if(init==1){
-
+				end_operand = 0;
 				/* SENDING DATA*/
 				if(sscanf(result, "%ld%s", &ntemp, lixo)==1){
+
 					if(ntemp>INT_MAX){
 						printf("ERROR: Overflow\n");
 					}else{
@@ -262,20 +269,33 @@ int main(int argc, char *argv[])
 							printf("WARNING please insert a valid command\n");
 						}
 					}else{
-						printf("WARNING please insert a valid command\n");
+					 	if(sscanf(result, "%c%c%s",&ctemp, &aux_char,lixo)==2){
+					 		/* the result is not printed if the command given is the debug command*/
+							if(aux_char == ';'){
+								convert_send(0, tosend->data);
+								tosend->op = ctemp;
+								end_operand = 1;
+								write_enable = 1;
+							}
+						}else{
+							printf("WARNING please insert a valid command\n");
+						}
 					}
 
 				}
-				
 				if(write_enable == 1){
-					item = (item_client*)malloc(1*sizeof(item_client));
-					item->tosend = *tosend;
+					for(i=0; i<=end_operand; i++){
+						item = (item_client*)malloc(1*sizeof(item_client));
+						item->tosend = *tosend;
 				
-					pthread_mutex_lock(&fifo);
-					queue(&front, &back, item);
-					pthread_mutex_unlock(&fifo);
-					sem_post(&fifo_cnt);
+						pthread_mutex_lock(&fifo);
+						queue(&front, &back, item);
+						pthread_mutex_unlock(&fifo);
+						sem_post(&fifo_cnt);
+						tosend->op = 'R';	
+					}
 				}
+				
 			}
 			result = strtok(NULL, delims);
 		}
