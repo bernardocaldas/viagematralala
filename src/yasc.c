@@ -22,7 +22,7 @@ If the client decides to abandon the session this thread will block until a new 
 #include "pool.h"
 #include "fifo.h"
 #include <unistd.h>
-#include <signal.h>
+#include <limits.h>
 
 #define WAIT_TIME 10
 
@@ -50,7 +50,8 @@ void * yasc (void * arg)
     /*Calculator*/
 	Stack * stack;
 	char ctemp, csend;
-	int itemp,opA,opB,opResult, top, nsend, depth;
+	int itemp, top, nsend, depth, opResult;
+	long int opResult_temp, opA, opB;
 	int n;
     package * torecv, *tosend;
 
@@ -158,10 +159,17 @@ void * yasc (void * arg)
 						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
-						opResult=opA+opB;
-						PushStack(&stack,opResult);
+						opResult_temp=opA+opB;
+						if(opResult_temp > INT_MAX){
+							printf("ERROR: Overflow\n");
+							FreeStack(&stack);
+							csend = 'I';
+						}else{
+							opResult = opResult_temp;
+							PushStack(&stack,opResult);
+							printf("%ld+%ld=%d\n",opA,opB,opResult);
+						}
 						pthread_mutex_unlock(&(self->stackmux));
-						printf("%d+%d=%d\n",opA,opB,opResult);
 						break;
 					/*SUBTRAÇÃO*/
 					case '-':
@@ -169,21 +177,34 @@ void * yasc (void * arg)
 						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
-						opResult=opA-opB;
-						PushStack(&stack,opResult);
+						opResult_temp=opA-opB;
+						if(opResult_temp<-INT_MAX){
+							printf("ERROR: Overflow\n");
+							FreeStack(&stack);
+							csend='I';
+						}else{
+							opResult = opResult_temp;
+							PushStack(&stack,opResult);
+							printf("%ld-%ld=%d\n",opA,opB,opResult);
+						}
 						pthread_mutex_unlock(&(self->stackmux));
-						printf("%d-%d=%d\n",opA,opB,opResult);
 						break;
 					case '*':
 						printf("Apanhei uma multiplicação\n");
 						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
-						opResult=opA*opB;
-						/*MAX_INT!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-						PushStack(&stack,opResult);
+						opResult_temp=opA*opB;
+						if(opResult_temp > INT_MAX){
+							printf("ERROR: Overflow\n");
+							FreeStack(&stack);
+							csend = 'I';
+						}else{
+							opResult = opResult_temp;
+							PushStack(&stack,opResult);
+							printf("%ld*%ld=%d\n",opA,opB,opResult);
+						}
 						pthread_mutex_unlock(&(self->stackmux));
-						printf("%d*%d=%d\n",opA,opB,opResult);
 						break;
 					case '/':
 						printf("Apanhei uma divisão\n");
@@ -191,14 +212,15 @@ void * yasc (void * arg)
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						if(opB==0){
-							printf("ERRO: divisão por zero\n");
-							csend = 'E';
+							printf("ERROR: divide by zero\n");
+							FreeStack(&stack);
+							csend = 'I';
 						} else{
-						opResult=opA/opB;
-						PushStack(&stack,opResult);
-						pthread_mutex_unlock(&(self->stackmux));
-						printf("%d/%d=%d\n",opA,opB,opResult);
+							opResult=opA/opB;
+							PushStack(&stack,opResult);
+							printf("%ld/%ld=%d\n",opA,opB,opResult);
 						}
+						pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case '%':
 						printf("Apanhei um módulo\n");
@@ -206,17 +228,21 @@ void * yasc (void * arg)
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA%opB;
-						PushStack(&stack,opResult);
+						if(opB==0){
+							printf("ERROR: divide by zero\n");
+							FreeStack(&stack);
+							csend = 'I';
+						} else{
+							PushStack(&stack,opResult);
+							printf("%ld mod %ld=%d\n",opA,opB,opResult);
+						}
 						pthread_mutex_unlock(&(self->stackmux));
-						printf("%d mod %d=%d\n",opA,opB,opResult);
 						break;
 					}
-					if(csend != 'E'){
+					if(csend != 'E'&& csend!='I'){
 						csend = 'V';
-						nsend = opResult;
-					}else{
-						nsend = 0;
 					}
+					nsend = 0;
 				
 				}
 			}
@@ -280,7 +306,7 @@ void * yasc (void * arg)
 						csend = 'E';
 						break;
 				}
-				if(csend != 'E'){
+				if(csend != 'E'&&csend != 'I'){
 						csend = 'V';
 				}else{
 						nsend = 0;

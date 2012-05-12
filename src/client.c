@@ -38,6 +38,7 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <netinet/in.h>
 #include <netdb.h> 
 #include <pthread.h>
+#include <limits.h>
 #include "protocol.h"
 #include "fifo.h"
 
@@ -99,12 +100,18 @@ void * write_read ( void * arg){
 		  /* CLEAN */
 		  exit(-4);
 		}
-		if (debug == 1){
+		if (debug){
 			if(tosend->op == 'D')
 				printf("%c%d=>",tosend->op, convert_recv(tosend->data));
 			else
 				printf("%c=>", tosend->op);
 				printf("%c %d\n",torecv->op, convert_recv(torecv->data));
+		}else{
+			if(torecv->op != 'E'){
+				if(tosend->op == 'T' ||tosend->op == 'P' ||tosend->op == 'R' ){
+					printf("%d\n", convert_recv(torecv->data));
+				}
+			}
 		}
 		
 		free(tosend);
@@ -134,7 +141,8 @@ int main(int argc, char *argv[])
     char lixo[LEN+1];
     FILE * file;
     char ctemp;
-    int n, ntemp, aux;
+    int n, aux;
+    long int ntemp;
     package * tosend;
     /*Flags*/
     int debug = 0;
@@ -233,13 +241,17 @@ int main(int argc, char *argv[])
 			}
 			if(init==1){
 
-				/* SENDING OPERAND CHAR*/
-				if(sscanf(result, "%d%s", &ntemp, lixo)==1){
-					convert_send(ntemp, tosend->data);
-					tosend->op = 'D';
-					write_enable = 1;
+				/* SENDING DATA*/
+				if(sscanf(result, "%ld%s", &ntemp, lixo)==1){
+					if(ntemp>INT_MAX){
+						printf("ERROR: Overflow\n");
+					}else{
+						convert_send(ntemp, tosend->data);
+						tosend->op = 'D';
+						write_enable = 1;
+					}
 				} else {
-					/*SENDING DATA*/
+					/*SENDING OPERAND*/
 					if(sscanf(result, "%c%s", &ctemp, lixo)==1){
 						/* the only characters accepted by the client and written in the socket are the ones defined in the protocol*/
 						if(ctemp == 'I'|| ctemp == 'P'|| ctemp == 'R'|| ctemp == 'T'|| ctemp == 'K' || ctemp == 'G'||ctemp == '+'||ctemp == '-'||ctemp == '*'||ctemp == '%'||ctemp == '/'){
