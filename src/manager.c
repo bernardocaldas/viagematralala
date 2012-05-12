@@ -38,10 +38,8 @@ void * manager ( void * arg){
 		
 			/* average waiting time in pool is bigger than the average waiting time in the fifo*/
 			if(pool_avg>fifo_avg){
-				pthread_mutex_lock(&poolmux);
 				create_pool_node (&first_pool_node, 0);
 				pool_no++;
-				pthread_mutex_unlock(&poolmux);
 			} 
 			/*if the FIFO is overcrowded but the average waiting time does not surpasses the pool average waiting time*/
 			else{

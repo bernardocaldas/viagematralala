@@ -46,9 +46,9 @@ void FreeStack (Stack ** top){
 	{
 		aux = (*top);
 		while(aux!=NULL){
-		temp = aux;
-		aux = aux->next;
-		free(temp);
+			temp = aux;
+			aux = aux->next;
+			free(temp);
 		}
 		(*top) = NULL;
 	}
@@ -60,8 +60,8 @@ void PrintStack(Stack ** top){
 	aux=(*top);
 	while(aux!=NULL)
 	{
-	printf("%d ", aux->num);
-	aux=aux->next;
+		printf("%d ", aux->num);
+		aux=aux->next;
 	}
 	printf("\n");
 }

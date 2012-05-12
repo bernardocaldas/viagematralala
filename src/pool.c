@@ -56,7 +56,7 @@ void remove_pool(pool_node ** first){
 }
 
 void free_pool_node(pool_node * node){
-	FreeStack(node->stack);
+	/*FreeStack(node->stack); JA TINHA SIDO LIBERTADA*/
 	free(node->thread);
 	free(node);
 
@@ -95,6 +95,13 @@ int pool_time_avg(pool_node ** first, int current_time){
 		
 	return total/active_threads;
 }
+
+/* 
+FUNCTION: display_client_info
+
+DESCRIPTION:
+This is a subfunction of the server administration tool that goes through all the threads in the 'pool' and prints their hostname, IP and current Stack.
+*/
 
 void display_client_info(pool_node * first){
 	pool_node *aux;

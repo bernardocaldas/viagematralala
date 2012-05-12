@@ -22,14 +22,10 @@ Authors:
 #include "protocol.h"
 #include "manager.h"
 
-/* 
-FUNCTION: display_client_info
+pthread_t mainthread;
 
-DESCRIPTION:
-This is a subfunction of the server administration tool that goes through all the threads in the 'pool' and prints their hostname, IP and current Stack.
-*/
 
-void server_cleanup (pthread_t mainthread){
+void server_cleanup (){
 
 	pthread_mutex_lock(&poolmux);
 	remove_pool(&first_pool_node);
@@ -54,29 +50,41 @@ Function that is run by a particular thread that is always available for input v
 	- M: displays info of the machines attached to the server at the current moment;
 */
 void * servadmin (void * arg){
-	pthread_t main_thread_t = *((pthread_t *) arg);
+	struct sigaction sact;
+	sigset_t new_set;
 	char buffer[LEN],lixo[LEN],ctemp;
+	
+	sigemptyset(&sact.sa_mask);
+	sact.sa_flags = 0;
+	sact.sa_handler = server_cleanup;
+	sigaction(SIGINT, &sact, NULL);
+	
+	sigfillset(&new_set);
+	sigdelset(&new_set, SIGINT);
+	sigprocmask(SIG_SETMASK, &new_set, NULL);
+	
 	bzero(buffer,LEN+1);
 	printf("Insert command: \n");
 	while(fgets(buffer,LEN,stdin)!=NULL){
-	if(sscanf(buffer, "%c%s", &ctemp, lixo)==1){
-		if(ctemp=='M'){
-			display_client_info(first_pool_node);
-		}
-		else if(ctemp=='F'){
-			server_cleanup(main_thread_t);
-		/*raise(SIGUSR1);*/
-		/*TEMP exit(1);*/
-		}
+		if(sscanf(buffer, "%c%s", &ctemp, lixo)==1){
+			if(ctemp=='M'){
+				display_client_info(first_pool_node);
+			}
+			else if(ctemp=='F'){
+				server_cleanup();
+				/*raise(SIGUSR1);*/
+				/*TEMP exit(1);*/
+			}
+			else{
+			printf("Please insert valid commands\n");
+			}
+		} 
 		else{
-		printf("Please insert valid commands\n");
+			printf("Please insert valid commands\n");
 		}
-	} 
-	else{
-		printf("Please insert valid commands\n");
+		printf("Insert command: \n");
 	}
-	printf("Insert command: \n");
-	}
+	printf("servadmin will terminate\n");
 }
 
 /* FUNCTION: threadpool 
@@ -99,6 +107,7 @@ void mainthread_kill(void * arg)
 {
 	pthread_t * manager=(pthread_t *) arg;
 	pthread_cancel(*manager);
+	printf("Mainthread will die\n");
 }
 /*Server
 
@@ -118,6 +127,10 @@ int main(int argc, char *argv[])
 /*SIGNALS*/
 	/*signal(SIGUSR1,treatment);*/
 	int old_cancel_type;
+	sigset_t set;
+	sigfillset (&set);
+    sigprocmask(SIG_BLOCK, &set, NULL);
+
 /* FIFO */
 	create_fifo(&front_server, &back_server);
 	fifo_count = 0;
@@ -158,11 +171,11 @@ int main(int argc, char *argv[])
      clilen = sizeof(cli_addr);
      
      threadpool(); /* creates threadpool */
-     	 pthread_t main_thread = pthread_self();
-	 pthread_create(&servadmin_t, NULL, servadmin, (void *)&(main_thread));
+     mainthread = pthread_self();
+	 pthread_create(&servadmin_t, NULL, servadmin, NULL);
 	 pthread_create(&poolman_t, NULL, manager, NULL);
 
-	 
+	 	 
 	 sem_init(&sem_fifo_used, 0, 0);
 	 sem_init(&sem_fifo_free, 0, MAX_FIFO); 
 	 

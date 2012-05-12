@@ -13,8 +13,6 @@ typedef struct s_item_server{
 
 typedef struct s_item_client{
 	package tosend;
-	/* the structure contains this element to prevent further conversions from ASCII to integer and viceversa */
-	int ntemp;
 }item_client;
 
 

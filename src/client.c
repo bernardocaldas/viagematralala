@@ -258,7 +258,6 @@ int main(int argc, char *argv[])
 				if(write_enable == 1){
 					item = (item_client*)malloc(1*sizeof(item_client));
 					item->tosend = *tosend;
-					item->ntemp = ntemp;
 				
 					pthread_mutex_lock(&fifo);
 					queue(&front, &back, item);
