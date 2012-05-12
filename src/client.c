@@ -39,6 +39,8 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include <netdb.h> 
 #include <pthread.h>
 #include <limits.h>
+#include <errno.h>
+#include <signal.h>
 #include "protocol.h"
 #include "fifo.h"
 
@@ -117,7 +119,6 @@ void * write_read ( void * arg){
 				}
 			}
 		}
-		
 		free(item);
 	}
 }
@@ -129,6 +130,22 @@ void clean ( struct hostent * server, package * tosend, package * torecv, FILE *
     }
     free(tosend);
     free(torecv);
+}
+
+void send2fifo(package * tosend, int end_operand){
+	int i;
+	item_client * item;
+	
+	for(i=0; i<=end_operand; i++){
+		item = (item_client*)malloc(1*sizeof(item_client));
+		item->tosend = *tosend;
+
+		pthread_mutex_lock(&fifo);
+		queue(&front, &back, item);
+		pthread_mutex_unlock(&fifo);
+		sem_post(&fifo_cnt);
+		tosend->op = 'R';	
+	}
 }
 
 int main(int argc, char *argv[])
@@ -155,7 +172,6 @@ int main(int argc, char *argv[])
     int init = 0;
     int write_enable = 0;
     /*Fifo*/
-    item_client * item;
     pthread_mutex_init(&fifo, NULL);
     create_fifo ( &front, &back);
     sem_init (&fifo_cnt, 0,0);
@@ -261,7 +277,10 @@ int main(int argc, char *argv[])
 					/*SENDING OPERAND*/
 					if(sscanf(result, "%c%s", &ctemp, lixo)==1){
 						/* the only characters accepted by the client and written in the socket are the ones defined in the protocol*/
-						if(ctemp == 'I'|| ctemp == 'P'|| ctemp == 'R'|| ctemp == 'T'|| ctemp == 'K' || ctemp == 'G'||ctemp == '+'||ctemp == '-'||ctemp == '*'||ctemp == '%'||ctemp == '/'){
+						if(ctemp == 'I'|| ctemp == 'P'|| ctemp == 'R'|| ctemp == 'T'|| ctemp == 'K' || ctemp == 'G'||ctemp == '+'||ctemp == '-'||ctemp == '*'||ctemp == '%'||ctemp == '/' || ctemp == ';'){
+							if(ctemp == ';'){
+								ctemp = 'R';
+							}
 							convert_send(0, tosend->data);
 							tosend->op = ctemp;	
 							write_enable = 1;
@@ -284,16 +303,7 @@ int main(int argc, char *argv[])
 
 				}
 				if(write_enable == 1){
-					for(i=0; i<=end_operand; i++){
-						item = (item_client*)malloc(1*sizeof(item_client));
-						item->tosend = *tosend;
-				
-						pthread_mutex_lock(&fifo);
-						queue(&front, &back, item);
-						pthread_mutex_unlock(&fifo);
-						sem_post(&fifo_cnt);
-						tosend->op = 'R';	
-					}
+					send2fifo(tosend, end_operand);
 				}
 				
 			}
@@ -301,6 +311,12 @@ int main(int argc, char *argv[])
 		}
 		bzero(buffer,256);
     }
+    /* functions used specially when reading a file: all the data has been inputed however the server hasn't been able to respond accordingly, so a pthread_join has to be used. The end of the wr_thread is forced by sending a 'K'*/
+    tosend->op = 'K';	
+    convert_send(0, tosend->data);
+	send2fifo(tosend, end_operand);
+    pthread_join(wr_thread, NULL);
+
     close(sockfd);
     /* CLEANING */
     return 0;
