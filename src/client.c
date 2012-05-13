@@ -234,7 +234,6 @@ int main(int argc, char *argv[])
 	/* COMMUNICATION CYCLE */
 	printf("To initialize communication session press 'I'\nTo terminate current session press 'K'\n");
     tosend = (package*) malloc(sizeof(package));
-    pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
 
 	bzero(buffer,LEN+1);
 	while(fgets(buffer,LEN,file)!=NULL){
@@ -246,6 +245,9 @@ int main(int argc, char *argv[])
 				if(sscanf(result,"%c%s", &ctemp, lixo)==1){
 					/*Client closes without waiting for server response*/
 					if(ctemp == 'K' ){
+						wr_arg[DEBUG_I] = debug;
+						wr_arg[SOCKET_I] = sockfd;
+    					pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
 						printf("Client closing\n");
 						tosend->op = 'K';
 						convert_send(0, tosend->data);
@@ -260,9 +262,10 @@ int main(int argc, char *argv[])
 					if(ctemp == 'I'){
 						printf("Communication session has been initialized; to enter debug mode press 'G'\n");
 						init = 1;
-						/* to minimize the use of global variables the socket file descriptor and the debug flag will be sent via argument to the write_read thread */
 						wr_arg[DEBUG_I] = debug;
 						wr_arg[SOCKET_I] = sockfd;
+    					pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
+						/* to minimize the use of global variables the socket file descriptor and the debug flag will be sent via argument to the write_read thread */
 						
 					}else{
 						printf("WARNING please press 'I' to initialize the session\n");
@@ -325,14 +328,18 @@ int main(int argc, char *argv[])
 				if(write_enable == 1){
 					send2fifo(tosend, end_operand);
 				}
-				
 			}
 			result = strtok(NULL, delims);
 		}
 		bzero(buffer,256);
     }
     /* functions used specially when reading a file: all the data has been inputed however the server hasn't been able to respond accordingly, so a pthread_join has to be used. The end of the wr_thread is forced by sending a 'K'*/
-    tosend->op = 'K';	
+	if(init==0){
+		wr_arg[DEBUG_I] = debug;
+		wr_arg[SOCKET_I] = sockfd;
+		pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
+	}    
+	tosend->op = 'K';	
     convert_send(0, tosend->data);
 	send2fifo(tosend, end_operand);
     pthread_join(wr_thread, NULL);
