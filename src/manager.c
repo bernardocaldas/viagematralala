@@ -18,6 +18,7 @@ void loop_node_create(int times){
 	for(i=0; i<times; i++){
 		if(pool_no<MAX_POOL){
 			create_pool_node (&first_pool_node, 0);
+			printf("Thread created\n");
 		}
 	}
 }
@@ -29,7 +30,6 @@ void * manager ( void * arg){
 	int current_time;
 	int pool_avg, fifo_avg;
 	int tol;
-	int create_avg, create_fifo;
 
 	while(1){
 		pthread_testcancel();
@@ -45,12 +45,15 @@ void * manager ( void * arg){
 			pthread_mutex_unlock(&mux);
 		
 			printf("avg pool time: %d avg fifo time %d\n", pool_avg, fifo_avg);
-		
-			create_avg = pool_avg/fifo_avg;
+			if(pool_avg>fifo_avg){
+				loop_node_create(1);
+			}
+			else{
 			/*if the FIFO is overcrowded but the average waiting time does not surpasses the pool average waiting time*/
-			create_fifo = fifo_count;
-			loop_node_create(create_avg*create_fifo);
-			
+				if(fifo_count>2/3*MAX_FIFO){
+					loop_node_create(fifo_count);
+				}
+			}
 		}
 	}
 
