@@ -120,7 +120,7 @@ void * write_read ( void * arg){
 			printf("%c %d\n",torecv->op, convert_recv(torecv->data));
 		}else{
 			if(torecv->op != 'E' && torecv->op != 'I'){
-				if(tosend->op == 'T' ||tosend->op == 'P' ||tosend->op == 'R' ){
+				if(tosend->op == 'T' ||tosend->op == 'P' ||tosend->op == 'R'){
 					printf("%d\n", convert_recv(torecv->data));
 				}
 			}
@@ -139,6 +139,7 @@ void send2fifo(package * tosend, int end_operand){
 		item->tosend = *tosend;
 
 		pthread_mutex_lock(&fifo);
+		printf("tosend: %c\n", tosend->op);
 		queue(&front, &back, item);
 		pthread_mutex_unlock(&fifo);
 		sem_post(&fifo_cnt);
@@ -233,7 +234,8 @@ int main(int argc, char *argv[])
 	/* COMMUNICATION CYCLE */
 	printf("To initialize communication session press 'I'\nTo terminate current session press 'K'\n");
     tosend = (package*) malloc(sizeof(package));
-    
+    pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
+
 	bzero(buffer,LEN+1);
 	while(fgets(buffer,LEN,file)!=NULL){
 		result=strtok((char*)buffer,delims);
@@ -261,7 +263,6 @@ int main(int argc, char *argv[])
 						/* to minimize the use of global variables the socket file descriptor and the debug flag will be sent via argument to the write_read thread */
 						wr_arg[DEBUG_I] = debug;
 						wr_arg[SOCKET_I] = sockfd;
-						pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
 						
 					}else{
 						printf("WARNING please press 'I' to initialize the session\n");

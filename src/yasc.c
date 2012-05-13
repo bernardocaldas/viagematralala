@@ -24,7 +24,7 @@ If the client decides to abandon the session this thread will block until a new 
 #include <unistd.h>
 #include <limits.h>
 
-#define WAIT_TIME 10
+#define WAIT_TIME 60
 
 /* auxiliar function related to the termination of the server */
 void treatment_kill(void * arg)
