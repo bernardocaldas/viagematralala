@@ -96,7 +96,12 @@ void * yasc (void * arg)
 		
 		newsockfd = item->socket;
 		self->socket = item->socket;
-		self->time = item->time;
+		
+		pthread_mutex_lock(&(self->timemux));
+			self->time = time(NULL);
+			self->active = 1;
+		pthread_mutex_unlock(&(self->timemux));
+	
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
@@ -335,6 +340,10 @@ void * yasc (void * arg)
 		printf("Thread will close its socket\n");
 		close(newsockfd);
 		self->socket = 0;
+		pthread_mutex_lock(&(self->timemux));
+		self->time =time(NULL)-self->time;
+		self->active = 0; 
+		pthread_mutex_unlock(&(self->timemux));		
 		/* CLEANING */
 		pthread_mutex_lock(&(self->stackmux));
 		FreeStack(&stack);

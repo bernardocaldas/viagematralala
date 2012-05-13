@@ -57,10 +57,10 @@ void FreeFifo(fifo_node ** front){
 	}	
 }
 
-int fifo_time_avg(fifo_node ** back, int current_time){
+float fifo_time_avg(fifo_node ** back, int current_time){
 	fifo_node * aux;
 	aux = *back;
-	int total = 0;
+	float total = 0;
 	item_server * item;
 	
 	while(aux!=NULL){

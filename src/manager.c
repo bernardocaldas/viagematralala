@@ -28,9 +28,9 @@ void * manager ( void * arg){
 
 	int old_cancel_type;
 	int current_time;
-	int pool_avg, fifo_avg;
+	float pool_avg, fifo_avg;
 	int tol;
-
+	int create_avg = 1;
 	while(1){
 		pthread_testcancel();
 		sleep(1);
@@ -44,16 +44,24 @@ void * manager ( void * arg){
 			fifo_avg = fifo_time_avg(&back_server, current_time);
 			pthread_mutex_unlock(&fifo_mux);
 		
-			printf("avg pool time: %d avg fifo time %d\n", pool_avg, fifo_avg);
-			if(pool_avg>fifo_avg){
-				loop_node_create(1);
+			printf("avg pool time: %f avg fifo time %f\n", pool_avg, fifo_avg);
+						
+			if(fifo_avg<2){
+				create_avg=1;
+			}else{
+				if(fifo_avg<5){
+					create_avg=2;
+				}else{
+					if(fifo_avg<10){
+						create_avg=3;
+					}else{
+						create_avg=4;
+					}				
+				}				
 			}
-			else{
+			
 			/*if the FIFO is overcrowded but the average waiting time does not surpasses the pool average waiting time*/
-				if(fifo_count>2/3*MAX_FIFO){
-					loop_node_create(fifo_count);
-				}
-			}
+			loop_node_create(create_avg*fifo_count);
 		}
 	}
 
