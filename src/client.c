@@ -54,6 +54,11 @@ pthread_mutex_t fifo;
 fifo_node * front;
 fifo_node * back;
 
+void wr_clean(package * to_recv, fifo_node **front)
+{
+	free(to_recv);
+	FreeFifo(front);
+}
 void * write_read ( void * arg){
 	int n;
 	int ntemp;
@@ -90,8 +95,10 @@ void * write_read ( void * arg){
 		/* if command 'K' is given the client writes to the socket and then terminates without waiting for an answer*/
 		if(ctemp == 'K' ){ 
 			printf("Client closing\n");
-			/* CLEAN */
-			exit(1);
+			pthread_mutex_lock(&fifo);
+			wr_clean(torecv,&front);
+			pthread_mutex_unlock(&fifo);
+			pthread_exit(NULL);
 		}
 	
 		if(ctemp == 'G'){
@@ -244,7 +251,11 @@ int main(int argc, char *argv[])
 					/*Client closes without waiting for server response*/
 					if(ctemp == 'K' ){
 						printf("Client closing\n");
-						/*CLEAN*/
+						tosend->op = 'K';
+						convert_send(0, tosend->data);
+						send2fifo(tosend, end_operand);
+						pthread_join(wr_thread, NULL);
+						close(sockfd);
 						exit(0);
 					}
 					if(ctemp == 'G'){
@@ -284,6 +295,16 @@ int main(int argc, char *argv[])
 						if(ctemp == 'I'|| ctemp == 'P'|| ctemp == 'R'|| ctemp == 'T'|| ctemp == 'K' || ctemp == 'G'||ctemp == '+'||ctemp == '-'||ctemp == '*'||ctemp == '%'||ctemp == '/' || ctemp == ';'){
 							if(ctemp == ';'){
 								ctemp = 'R';
+							}
+							else if(ctemp == 'K')
+							{
+								printf("Client closing\n");
+								tosend->op = 'K';
+								convert_send(0, tosend->data);
+								send2fifo(tosend, end_operand);
+								pthread_join(wr_thread, NULL);
+								close(sockfd);
+								exit(0);
 							}
 							convert_send(0, tosend->data);
 							tosend->op = ctemp;	

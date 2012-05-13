@@ -40,7 +40,9 @@ void queue (fifo_node ** front, fifo_node ** back, void * item) {
 
 void remove_fifo_node(fifo_node * aux)
 {
-
+	/*Como é que eu sei que tipo de fifo_node é que é?*/
+	free(aux->item);
+	free(aux);
 }
 
 void FreeFifo(fifo_node ** front){
