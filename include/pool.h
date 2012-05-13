@@ -12,7 +12,6 @@
 #define MAX_POOL 5
 
 int pool_no;
-int free_cnt;
 int active_threads;
 
 pthread_mutex_t poolmux;

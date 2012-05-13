@@ -40,9 +40,9 @@ void * manager ( void * arg){
 			pool_avg = pool_time_avg(&first_pool_node, current_time);
 			pthread_mutex_unlock(&poolmux);
 		
-			pthread_mutex_lock(&mux);
+			pthread_mutex_lock(&fifo_mux);
 			fifo_avg = fifo_time_avg(&back_server, current_time);
-			pthread_mutex_unlock(&mux);
+			pthread_mutex_unlock(&fifo_mux);
 		
 			printf("avg pool time: %d avg fifo time %d\n", pool_avg, fifo_avg);
 			if(pool_avg>fifo_avg){

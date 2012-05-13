@@ -23,7 +23,8 @@ typedef struct s_node{
 
 sem_t sem_fifo_used;
 sem_t sem_fifo_free;
-pthread_mutex_t mux;
+pthread_mutex_t fifo_mux;
+
 fifo_node * front_server;
 fifo_node * back_server;
 int fifo_count;

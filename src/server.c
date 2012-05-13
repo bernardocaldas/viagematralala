@@ -31,10 +31,10 @@ void server_cleanup (){
 	remove_pool(&first_pool_node);
 	pthread_mutex_unlock(&poolmux);
 	
-	pthread_mutex_lock(&mux);
+	pthread_mutex_lock(&fifo_mux);
 	FreeFifo(&front_server);
 	pthread_cancel(mainthread);
-	pthread_mutex_unlock(&mux);
+	pthread_mutex_unlock(&fifo_mux);
 	
 	printf("Cleanup finished. Bye!\n");
 	pthread_exit(0);
@@ -120,7 +120,7 @@ The FIFO queue is protected by a mutex to avoid problems between pool_threads an
 int main(int argc, char *argv[])
 {
 /* MUTEX */
-	pthread_mutex_init(&mux, NULL);
+	pthread_mutex_init(&fifo_mux, NULL);
 	pthread_mutex_init(&active_thread_mux,NULL);
 
 /*SIGNALS*/
@@ -187,13 +187,13 @@ int main(int argc, char *argv[])
         item = (item_server*)malloc(1*sizeof(item_server));
         item->socket = newsockfd;
         item->time = time(NULL);
-        pthread_mutex_lock(&mux);
+        pthread_mutex_lock(&fifo_mux);
         /* Entering Critical FIFO Region*/
 	    queue (&front_server ,&back_server, item);
 	    sem_post(&sem_fifo_used);
         fifo_count++;
         /* Exiting Critical FIFO Region*/
-        pthread_mutex_unlock(&mux);
+        pthread_mutex_unlock(&fifo_mux);
      }
      close(sockfd);
      pthread_cleanup_pop(0);
