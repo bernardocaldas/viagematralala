@@ -31,7 +31,7 @@ void treatment_kill(void * arg)
 {
 	pool_node * self;
 	self= (pool_node *) arg;
-	FreeStack(self->stack);
+	remove_pool_node(&first_pool_node,self);
 	pthread_mutex_lock(&active_thread_mux);
 	active_threads--;
 	pthread_mutex_unlock(&active_thread_mux);
@@ -71,9 +71,6 @@ void * yasc (void * arg)
     		timer.tv_nsec = 0;
 			if(sem_timedwait(&sem_fifo_used, &timer)==-1){
 				printf("Thread will die; sem_out %d\n", n);
-				pthread_mutex_lock(&poolmux);
-				remove_pool_node(&first_pool_node,self);
-				pthread_mutex_unlock(&poolmux);
 				pthread_exit(NULL);
 		}
 		}else{

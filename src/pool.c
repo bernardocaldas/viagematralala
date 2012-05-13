@@ -46,29 +46,26 @@ void remove_pool(pool_node ** first){
 		if(aux1->thread!=NULL)
 		{
 			printf("Thread %d will die;\n", aux1->thread);
+			aux2=aux1->next;
+			pthread_mutex_unlock(&poolmux);/* A função de terminação da thread a ser cancelada invoca remove_pool_node(), que obtém ela própria o lock*/
 			pthread_cancel(*(aux1->thread));
 			pthread_join(*(aux1->thread),NULL);
+			pthread_mutex_lock(&poolmux);
 		}
-		aux2=aux1->next;
-		free_pool_node(aux1);
 		aux1=aux2;
 	}
 
 }
 
-void free_pool_node(pool_node * node){
-	/*FreeStack(node->stack); JA TINHA SIDO LIBERTADA*/
-	free(node->thread);
-	free(node);
 
-}
-
-void remove_pool_node(pool_node **first,pool_node * node){
+void remove_pool_node(pool_node **first,pool_node * node){ /*poolmux tem de chegar desbloqueado a esta função*/
+	pthread_mutex_lock(&poolmux);
 	pool_node * aux = *first;
 	if(node==*first)
 	{
 		(*first)=node->next;
-		free_pool_node(node);
+		free(node->thread);
+		free(node);	
 	}
 	else if(aux!=NULL){
 		while(aux->next!=node)
@@ -76,9 +73,9 @@ void remove_pool_node(pool_node **first,pool_node * node){
 		aux=aux->next;
 		}
 		aux->next=node->next;
-		free_pool_node(node);	
+		free(node->thread);
+		free(node);	
 	}
-	pthread_mutex_lock(&poolmux);
 	pool_no--;
 	pthread_mutex_unlock(&poolmux);
 }
