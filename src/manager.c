@@ -13,6 +13,15 @@ Arguments: this function must receive a pointer to an integer containing the tim
 #include "pool.h"
 
 /* Esta função deverá estar integrada no .c e .h referente às estruturas de dados*/
+void loop_node_create(int times){
+	int i;
+	for(i=0; i<times; i++){
+		if(pool_no<MAX_POOL){
+			create_pool_node (&first_pool_node, 0);
+		}
+	}
+}
+
 
 void * manager ( void * arg){
 
@@ -20,6 +29,7 @@ void * manager ( void * arg){
 	int current_time;
 	int pool_avg, fifo_avg;
 	int tol;
+	int create_avg, create_fifo;
 
 	while(1){
 		pthread_testcancel();
@@ -36,23 +46,13 @@ void * manager ( void * arg){
 		
 			printf("avg pool time: %d avg fifo time %d\n", pool_avg, fifo_avg);
 		
-			/* average waiting time in pool is bigger than the average waiting time in the fifo*/
-			if(pool_avg>fifo_avg){
-				create_pool_node (&first_pool_node, 0);
-				pool_no++;
-			} 
+			create_avg = pool_avg/fifo_avg;
 			/*if the FIFO is overcrowded but the average waiting time does not surpasses the pool average waiting time*/
-			else{
-				if(fifo_count > 2/3*MAX_FIFO){
-					if(pool_no<MAX_POOL){
-						create_pool_node (&first_pool_node, 0);
-						pool_no++;
-					}
-				}
-			}
+			create_fifo = fifo_count;
+			loop_node_create(create_avg*create_fifo);
+			
 		}
 	}
 
 	pthread_exit (NULL);
 }
-
