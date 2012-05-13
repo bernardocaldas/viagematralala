@@ -245,7 +245,6 @@ int main(int argc, char *argv[])
 				if(sscanf(result,"%c%s", &ctemp, lixo)==1){
 					/*Client closes without waiting for server response*/
 					if(ctemp == 'K' ){
-						/*if 'K' is inserted before the session is initialized the server must be warned. So the wr_thread must be created to perform the communication operations*/ 
 						wr_arg[DEBUG_I] = debug;
 						wr_arg[SOCKET_I] = sockfd;
     					pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
