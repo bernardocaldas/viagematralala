@@ -96,9 +96,8 @@ Since the server administration thread isn't running yet, only one thread is wor
 void threadpool (){
 
 	int i;
-	pool_no = POOL_INIT;
 	first_pool_node = create_pool();
-	for(i=0; i< pool_no; i++){
+	for(i=0; i< POOL_INIT; i++){
 		create_pool_node(&first_pool_node, 1);
 	}	
 }

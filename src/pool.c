@@ -33,6 +33,7 @@ void create_pool_node(pool_node ** first, int flag){
 	}else{
 		*first = new;
 	}
+	pool_no++;
 	pthread_mutex_unlock(&poolmux);
 	
 }
@@ -66,7 +67,7 @@ void remove_pool_node(pool_node **first,pool_node * node){
 	pool_node * aux = *first;
 	if(node==*first)
 	{
-		*first=node->next;
+		(*first)=node->next;
 		free_pool_node(node);
 	}
 	else if(aux!=NULL){
@@ -75,10 +76,11 @@ void remove_pool_node(pool_node **first,pool_node * node){
 		aux=aux->next;
 		}
 		aux->next=node->next;
-		free_pool_node(node);
-	
+		free_pool_node(node);	
 	}
-	
+	pthread_mutex_lock(&poolmux);
+	pool_no--;
+	pthread_mutex_unlock(&poolmux);
 }
 
 int pool_time_avg(pool_node ** first, int current_time){

@@ -77,9 +77,8 @@ void * write_read ( void * arg){
 		item = (item_client *) dequeue(&front, &back);
 		pthread_mutex_unlock(&fifo);
 		
-		*tosend = item->tosend;
+		tosend = &(item->tosend);
 		ctemp = tosend->op;
-		
 		
 		/* WRITING and READING operations*/
 		n = write(sockfd,tosend,sizeof(package));
@@ -155,6 +154,7 @@ int main(int argc, char *argv[])
     struct sockaddr_in serv_addr;
     struct hostent *server;
     int connect_cnt, aux_connect;
+	char file_path [LEN+1];
     /*Communication*/
     char delims[3]={' ','\n'};
     char * result;
@@ -183,6 +183,9 @@ int main(int argc, char *argv[])
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
        exit(-1);
     }
+	if(argc > 4){
+		fprintf(stderr, "usage %s hostname port txtfilename\n", argv[0]);
+	}
     portno = atoi(argv[2]);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
@@ -216,7 +219,8 @@ int main(int argc, char *argv[])
 	
 	/* ORDERS FROM FILE */
 	if(argc==4){
-		file = fopen(argv[3], "r");
+		strcpy(file_path,"txt/");
+		file = fopen(strcat((char*)file_path,argv[3]), "r");
 		if(file == NULL){
 			perror("ERROR opening file\n");
 			file = stdin;

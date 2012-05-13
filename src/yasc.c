@@ -76,12 +76,11 @@ void * yasc (void * arg)
 				pthread_mutex_unlock(&poolmux);
 				pthread_exit(NULL);
 		}
-	}else{
-		/*PERMANENT THREAD*/
-		 
-		/*The thread can't be canceled while holding the lock, or else it would be impossible to clean the queue (and an error would be thrown if someone tried to lock it)*/
-		sem_wait(&sem_fifo_used);
-	}
+		}else{
+			/*PERMANENT THREAD*/
+			/*The thread can't be canceled while holding the lock, or else it would be impossible to clean the queue (and an error would be thrown if someone tried to lock it)*/
+			sem_wait(&sem_fifo_used);
+		}
 		pthread_mutex_lock(&mux);
 		/* Entering Critical Region */
 		item =(item_server*) dequeue(&front_server,&back_server);
