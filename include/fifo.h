@@ -23,7 +23,8 @@ typedef struct s_node{
 
 sem_t sem_fifo_used;
 sem_t sem_fifo_free;
-pthread_mutex_t mux;
+pthread_mutex_t fifo_mux;
+
 fifo_node * front_server;
 fifo_node * back_server;
 int fifo_count;
@@ -32,7 +33,7 @@ int fifo_count;
 void create_fifo(fifo_node ** front, fifo_node ** back);
 void * dequeue(fifo_node ** front, fifo_node ** back);
 void queue (fifo_node ** front, fifo_node ** back, void * item);
-int fifo_time_avg(fifo_node ** back, int current_time);
+float fifo_time_avg(fifo_node ** back, int current_time);
 
 
 #endif

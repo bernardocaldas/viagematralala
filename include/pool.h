@@ -12,7 +12,6 @@
 #define MAX_POOL 5
 
 int pool_no;
-int free_cnt;
 int active_threads;
 
 pthread_mutex_t poolmux;
@@ -26,6 +25,8 @@ typedef struct s_pool{
 	int flag;
 	Stack ** stack;
 	pthread_mutex_t stackmux;
+	pthread_mutex_t timemux;
+	int active;
 }pool_node;
 
 pool_node * first_pool_node;
@@ -36,7 +37,7 @@ void create_pool_node(pool_node ** first, int flag);
 pool_node * create_pool();
 void free_pool_node(pool_node *);
 void remove_pool_node(pool_node **,pool_node *);
-int pool_time_avg(pool_node ** first, int current_time);
+float pool_time_avg(pool_node ** first, int current_time);
 void display_client_info(pool_node *);
 #endif
 

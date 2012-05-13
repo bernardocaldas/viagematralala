@@ -78,13 +78,13 @@ void * yasc (void * arg)
 			/*The thread can't be canceled while holding the lock, or else it would be impossible to clean the queue (and an error would be thrown if someone tried to lock it)*/
 			sem_wait(&sem_fifo_used);
 		}
-		pthread_mutex_lock(&mux);
+		pthread_mutex_lock(&fifo_mux);
 		/* Entering Critical Region */
 		item =(item_server*) dequeue(&front_server,&back_server);
 		sem_post(&sem_fifo_free);
 		fifo_count--;
 		/* Exiting Critcal Region */
-		pthread_mutex_unlock(&mux);
+		pthread_mutex_unlock(&fifo_mux);
 		
 		pthread_mutex_lock(&active_thread_mux);
 		active_threads++;
@@ -93,7 +93,12 @@ void * yasc (void * arg)
 		
 		newsockfd = item->socket;
 		self->socket = item->socket;
-		self->time = item->time;
+		
+		pthread_mutex_lock(&(self->timemux));
+			self->time = time(NULL);
+			self->active = 1;
+		pthread_mutex_unlock(&(self->timemux));
+	
 		
 		torecv = (package*) malloc(sizeof(package));
 		tosend = (package*) malloc(sizeof(package));
@@ -332,6 +337,10 @@ void * yasc (void * arg)
 		printf("Thread will close its socket\n");
 		close(newsockfd);
 		self->socket = 0;
+		pthread_mutex_lock(&(self->timemux));
+		self->time =time(NULL)-self->time;
+		self->active = 0; 
+		pthread_mutex_unlock(&(self->timemux));		
 		/* CLEANING */
 		pthread_mutex_lock(&(self->stackmux));
 		FreeStack(&stack);

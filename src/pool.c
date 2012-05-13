@@ -23,6 +23,7 @@ void create_pool_node(pool_node ** first, int flag){
 	new->stack=NULL;
 	new->flag = flag;
 	pthread_mutex_init(&(new->stackmux),NULL);
+	pthread_mutex_init(&(new->timemux),NULL);
 	pthread_mutex_lock(&poolmux);
 	aux = *first;
 	if(aux!= NULL){
@@ -80,19 +81,26 @@ void remove_pool_node(pool_node **first,pool_node * node){ /*poolmux tem de cheg
 	pthread_mutex_unlock(&poolmux);
 }
 
-int pool_time_avg(pool_node ** first, int current_time){
+float pool_time_avg(pool_node ** first, int current_time){
 	pool_node * aux;
 	aux = *first;
-	int total = 0;
+	float total = 0;
 	
 	while(aux!=NULL){
-		total = total + (current_time-aux->time);
+		pthread_mutex_lock(&(aux->timemux));
+		if(aux->active == 1){
+			total = total + (current_time-aux->time);
+		} else {
+			total = total + aux->time;
+		}
+		pthread_mutex_unlock(&(aux->timemux));
 		aux=aux->next;
 	}	
-	if(pool_no==0)
+	if(pool_no==0){
 		return 0;
+	}
 		
-	return total/active_threads;
+	return total/pool_no;
 }
 
 /* 
