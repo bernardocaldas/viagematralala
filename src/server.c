@@ -22,6 +22,8 @@ Authors:
 #include "protocol.h"
 #include "manager.h"
 
+#define MAX_ACCEPT 5
+
 pthread_t mainthread;
 
 
@@ -149,6 +151,8 @@ int main(int argc, char *argv[])
      struct sockaddr_in serv_addr, cli_addr;
      int n;
      pid_t pid;
+	 int accept_attempts=0;
+
      if (argc < 2) {
          fprintf(stderr,"ERROR, no port provided\n");
          exit(1);
@@ -180,10 +184,17 @@ int main(int argc, char *argv[])
 	 
 	 while(1){
 	 	sem_wait(&sem_fifo_free);
-     	newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-     	if (newsockfd < 0){
-          perror("ERROR on accept");
-        }
+		do{
+		 	newsockfd = accept(sockfd, (struct sockaddr*) &cli_addr, &clilen);
+		 	if (newsockfd < 0){
+		      perror("ERROR on accept");
+		    }
+		}
+		while((newsockfd<0) && (accept_attempts<MAX_ACCEPT));
+		if(accept_attempts== MAX_ACCEPT){
+			printf("ERROR maximum connection attempts permited");
+			raise(SIGINT);
+		}
         item = (item_server*)malloc(1*sizeof(item_server));
         item->socket = newsockfd;
         item->time = time(NULL);

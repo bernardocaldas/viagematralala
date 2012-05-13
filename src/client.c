@@ -88,7 +88,7 @@ void * write_read ( void * arg){
 		/* WRITING and READING operations*/
 		n = write(sockfd,tosend,sizeof(package));
 		if (n <= 0){
-		  perror("ERROR writing to socket\n");
+		  printf("ERROR writing to socket\n");
 		  /* CLEAN */
 		  exit(-4);
 		 }
@@ -107,7 +107,7 @@ void * write_read ( void * arg){
 		
 		n = read(sockfd,torecv,sizeof(package));
 		if(n<= 0){
-		  perror("ERROR reading from socket\n");
+		  printf("ERROR reading from socket\n");
 		  /* CLEAN */
 		  exit(-4);
 		}
@@ -129,14 +129,6 @@ void * write_read ( void * arg){
 	}
 }
 
-void clean ( struct hostent * server, package * tosend, package * torecv, FILE * file){
-/* CLEANING */
-    if(file!= stdin){
-    	fclose(file);
-    }
-    free(tosend);
-    free(torecv);
-}
 
 void send2fifo(package * tosend, int end_operand){
 	int i;
@@ -195,8 +187,10 @@ int main(int argc, char *argv[])
 	}
     portno = atoi(argv[2]);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0) 
-        error("ERROR opening socket");
+    if (sockfd < 0) {
+        perror("ERROR opening socket");
+		exit(-5);
+	}
     server = gethostbyname(argv[1]);
     if (server == NULL) {
         fprintf(stderr,"ERROR, no such host\n");

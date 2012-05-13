@@ -121,9 +121,9 @@ void * yasc (void * arg)
 				convert_send(0, tosend->data);
 				tosend->op = 'E';
 				n = write(newsockfd, tosend, sizeof(package));
-				if (n < 0) {
+				if (n <= 0) {
 					perror("ERROR writing to socket");
-					break;
+					goto out;
 				}
 			}
 		}
