@@ -53,7 +53,11 @@ sem_t fifo_cnt;
 pthread_mutex_t fifo;
 fifo_node * front;
 fifo_node * back;
-
+typedef struct main_clean_s 
+{
+	FILE ** fp;
+	package ** tosend;
+}main_clean_s;
 void wr_clean(package * to_recv, fifo_node **front)
 {
 	free(to_recv);
@@ -145,6 +149,16 @@ void send2fifo(package * tosend, int end_operand){
 		sem_post(&fifo_cnt);
 		tosend->op = 'R';	
 	}
+}
+
+void main_clean (void * arg){
+/* CLEANING */
+	main_clean_s * aux = (main_clean_s *)arg;
+    if(*(aux->fp)!= stdin && *(aux->fp)!= NULL){
+    	fclose(*(aux->fp));
+    }
+    if(*(aux->tosend)!=NULL)
+    	free(*(aux->tosend));
 }
 
 int main(int argc, char *argv[])
