@@ -4,7 +4,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <protocol.h>
-#define MAX_FIFO 1
+#define MAX_FIFO 1000
 
 typedef struct s_item_server{
 	int socket;
