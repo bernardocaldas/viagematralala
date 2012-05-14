@@ -8,7 +8,7 @@ void create_fifo(fifo_node ** front, fifo_node ** back){
 }
 
 void * dequeue(fifo_node ** front,fifo_node ** back) {
-	item_server * item;
+	void * item;
 	fifo_node * aux;
 	aux = *front;
 	*front = aux->next; 
@@ -17,7 +17,7 @@ void * dequeue(fifo_node ** front,fifo_node ** back) {
 		*back=NULL;
 	}
 	printf("Tirei da queue o aux no. %X\n", (int)aux);
-	item = (item_server*) aux->item;
+	item = (void*) aux->item;
 	free(aux);
 	return item;
 }
@@ -40,7 +40,6 @@ void queue (fifo_node ** front, fifo_node ** back, void * item) {
 
 void remove_fifo_node(fifo_node * aux)
 {
-	/*Como é que eu sei que tipo de fifo_node é que é?*/
 	free(aux->item);
 	free(aux);
 }

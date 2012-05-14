@@ -45,6 +45,7 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #include "fifo.h"
 
 
+
 #define MAX_CONNECT 5 /* defines maximum connection attempts */
 #define DEBUG_I 0
 #define SOCKET_I 1
@@ -66,7 +67,6 @@ typedef struct main_clean_s
 typedef struct wr_clean_s 
 {
 	package ** to_recv;
-	item_client ** item;
 }wr_clean_s;
 
 typedef struct wr_arg_t
@@ -94,16 +94,13 @@ void wr_clean(void * arg)
 {
 	wr_clean_s * aux = (wr_clean_s *) arg;
 	free(*(aux->to_recv));
-	if(*(aux->item)!=NULL)
-	{
-		free(*(aux->item));
-	}
 	pthread_mutex_lock(&fifo);
 	FreeFifo(&front);
 	pthread_mutex_unlock(&fifo);
 }
 
 void sig_handler(){
+	package tosend;
 	printf("\nCTRL-C detected\n");
 	if(wr_t!=-1) /*If wr_t hasn't been created yet*/
 	{
@@ -119,15 +116,16 @@ void * write_read ( void * arg){
 	char ctemp;
 	int sockfd;
 	wr_arg_t * aux;
-	package * tosend, *torecv; 
-	item_client *item;
+	package *torecv;
+	package tosend; 
+	item_client *item_p;
+	item_client item;
 	int old_cancel_type;
 	wr_clean_s aux_clean;
 	aux_clean.to_recv = &torecv;
-	aux_clean.item=&item;
 	
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
-    pthread_cleanup_push(wr_clean,(void*)&aux_clean);
+    	pthread_cleanup_push(wr_clean,(void*)&aux_clean);
 	
 	
     torecv = (package*) malloc(sizeof(package));
@@ -139,15 +137,17 @@ void * write_read ( void * arg){
 		sem_wait(&fifo_cnt);
 		pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type); /*Guarantees that the thread doesn't get canceled while holding the lock*/
 		pthread_mutex_lock(&fifo);
-		item = (item_client *) dequeue(&front, &back);
+		item_p = (item_client *) dequeue(&front, &back);
 		pthread_mutex_unlock(&fifo);
+		item=(*item_p);
+		free(item_p);
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 		
-		tosend = &(item->tosend);
-		ctemp = tosend->op;
+		tosend = item.tosend;
+		ctemp = tosend.op;
 		
 		/* WRITING and READING operations*/
-		n = write(sockfd,tosend,sizeof(package));
+		n = write(sockfd,&tosend,sizeof(package));
 		if (n <= 0){
 		  printf("ERROR writing to socket\n");
 		  pthread_cancel(main_t);
@@ -172,23 +172,19 @@ void * write_read ( void * arg){
 		  pthread_exit(NULL);
 		}
 		if (debug){
-			if(tosend->op == 'D'){
-				printf("%c%d=>",tosend->op, convert_recv(tosend->data));
+			if(tosend.op == 'D'){
+				printf("%c%d=>",tosend.op, convert_recv(tosend.data));
 			}else{
-				printf("%c=>", tosend->op);
+				printf("%c=>", tosend.op);
 			}
 			printf("%c %d\n",torecv->op, convert_recv(torecv->data));
 		}else{
 			if(torecv->op != 'E' && torecv->op != 'I'){
-				if(tosend->op == 'T' ||tosend->op == 'P' ||tosend->op == 'R'){
+				if(tosend.op == 'T' ||tosend.op == 'P' ||tosend.op == 'R'){
 					printf("%d\n", convert_recv(torecv->data));
 				}
 			}
 		}
-		pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type); /*Guarantees that the thread isn't canceled while item is being freed, which would result in wr_clean trying to free item again*/
-		free(item);
-		item=NULL;
-		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);		
 	}
 	pthread_cleanup_pop(0);
 }
@@ -336,7 +332,7 @@ int main(int argc, char *argv[])
 	block_except_sigint();	
 	
 	bzero(buffer,LEN+1);
-	while(fgets(buffer,LEN,file)!=NULL){
+	while(fgets(buffer,LEN+1,file)!=NULL){
 		result=strtok((char*)buffer,delims);
 		while (result != NULL){
 			write_enable = 0;
