@@ -153,7 +153,6 @@ void send2fifo(package * tosend, int end_operand){
 		item->tosend = *tosend;
 
 		pthread_mutex_lock(&fifo);
-		printf("tosend: %c\n", tosend->op);
 		queue(&front, &back, item);
 		pthread_mutex_unlock(&fifo);
 		sem_post(&fifo_cnt);
@@ -187,7 +186,7 @@ int main(int argc, char *argv[])
     FILE * file;
     char ctemp, aux_char;
     int n, aux;
-    long int ntemp;
+    long long int ntemp;
     package * tosend;
     int end_operand = 0;
     int i;
@@ -310,7 +309,7 @@ int main(int argc, char *argv[])
 			if(init==1){
 				end_operand = 0;
 				/* SENDING DATA*/
-				if(sscanf(result, "%ld%s", &ntemp, lixo)==1){
+				if(sscanf(result, "%lld%s", &ntemp, lixo)==1){
 
 					if(ntemp>INT_MAX){
 						printf("ERROR: Overflow\n");

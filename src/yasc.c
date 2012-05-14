@@ -51,7 +51,7 @@ void * yasc (void * arg)
 	Stack * stack;
 	char ctemp, csend;
 	int itemp, top, nsend, depth, opResult;
-	long int opResult_temp, opA, opB;
+	long long int opResult_temp, opA, opB;
 	int n;
     package * torecv, *tosend;
 
@@ -158,8 +158,8 @@ void * yasc (void * arg)
 					case '+':
 						printf("Apanhei uma soma\n");
 						pthread_mutex_lock(&(self->stackmux));
-						opA=PopStack(&stack);
-						opB=PopStack(&stack);
+						opA=(long long int)PopStack(&stack);
+						opB=(long long int)PopStack(&stack);
 						opResult_temp=opA+opB;
 						if(opResult_temp > INT_MAX){
 							printf("ERROR: Overflow\n");
@@ -168,7 +168,7 @@ void * yasc (void * arg)
 						}else{
 							opResult = opResult_temp;
 							PushStack(&stack,opResult);
-							printf("%ld+%ld=%d\n",opA,opB,opResult);
+							printf("%lld+%lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
@@ -176,8 +176,8 @@ void * yasc (void * arg)
 					case '-':
 						printf("Apanhei uma subtração\n");
 						pthread_mutex_lock(&(self->stackmux));
-						opA=PopStack(&stack);
-						opB=PopStack(&stack);
+						opA=(long long int)PopStack(&stack);
+						opB=(long long int)PopStack(&stack);
 						opResult_temp=opA-opB;
 						if(opResult_temp<-INT_MAX){
 							printf("ERROR: Overflow\n");
@@ -186,15 +186,15 @@ void * yasc (void * arg)
 						}else{
 							opResult = opResult_temp;
 							PushStack(&stack,opResult);
-							printf("%ld-%ld=%d\n",opA,opB,opResult);
+							printf("%lld-%lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case '*':
 						printf("Apanhei uma multiplicação\n");
 						pthread_mutex_lock(&(self->stackmux));
-						opA=PopStack(&stack);
-						opB=PopStack(&stack);
+						opA=(long long int)PopStack(&stack);
+						opB=(long long int)PopStack(&stack);
 						opResult_temp=opA*opB;
 						if(opResult_temp > INT_MAX){
 							printf("ERROR: Overflow\n");
@@ -203,7 +203,7 @@ void * yasc (void * arg)
 						}else{
 							opResult = opResult_temp;
 							PushStack(&stack,opResult);
-							printf("%ld*%ld=%d\n",opA,opB,opResult);
+							printf("%lld*%lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
@@ -219,7 +219,7 @@ void * yasc (void * arg)
 						} else{
 							opResult=opA/opB;
 							PushStack(&stack,opResult);
-							printf("%ld/%ld=%d\n",opA,opB,opResult);
+							printf("%lld/%lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
@@ -235,7 +235,7 @@ void * yasc (void * arg)
 							csend = 'I';
 						} else{
 							PushStack(&stack,opResult);
-							printf("%ld mod %ld=%d\n",opA,opB,opResult);
+							printf("%lld mod %lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
