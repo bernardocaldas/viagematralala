@@ -1,7 +1,8 @@
 #ifndef _PROTOCOL_H_
 #define _PROTOCOL_H_
 
-#define LEN 1023 /* fgets reading length*/
+#include<arpa/inet.h>
+#define LEN 2047 /* fgets reading length*/
 
 typedef struct s_package {
 	char data[8];

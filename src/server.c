@@ -25,6 +25,7 @@ Authors:
 #define MAX_ACCEPT 5
 
 pthread_t mainthread;
+int sockfd;
 
 
 void server_cleanup (){
@@ -87,6 +88,7 @@ void * servadmin (void * arg){
 		printf("Insert command: \n");
 	}
 	printf("servadmin will terminate\n");
+	pthread_exit(NULL);
 }
 
 /* FUNCTION: threadpool 
@@ -109,6 +111,9 @@ void mainthread_kill(void * arg)
 	pthread_t * manager=(pthread_t *) arg;
 	pthread_cancel(*manager);
 	printf("Mainthread will die\n");
+	if(sockfd!=-1){
+		close(sockfd);
+	}
 }
 /*Server
 
@@ -145,11 +150,9 @@ int main(int argc, char *argv[])
 	pthread_cleanup_push(mainthread_kill,(void*)&poolman_t);
 	
 /* SOCKETS */
-     int sockfd, newsockfd, portno;
+     int newsockfd, portno;
      socklen_t clilen;
      struct sockaddr_in serv_addr, cli_addr;
-     int n;
-     pid_t pid;
 	 int accept_attempts=0;
 
      if (argc < 2) {
@@ -169,7 +172,7 @@ int main(int argc, char *argv[])
               perror("ERROR on binding");
               exit(-1);
      }
-     listen(sockfd,100); 
+     listen(sockfd,256); 
      clilen = sizeof(cli_addr);
      
      threadpool(); /* creates threadpool */
@@ -206,6 +209,7 @@ int main(int argc, char *argv[])
         pthread_mutex_unlock(&fifo_mux);
      }
      close(sockfd);
+	 sockfd=-1;
      pthread_cleanup_pop(0);
      return 0; 
 }

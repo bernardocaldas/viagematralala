@@ -50,6 +50,8 @@ Problems: makefile can't use all flags - errors concerning the existence of some
 #define DEBUG_I 0
 #define SOCKET_I 1
 
+sem_t debug_sync;
+
 sem_t fifo_cnt;
 pthread_mutex_t fifo;
 fifo_node * front;
@@ -100,7 +102,6 @@ void wr_clean(void * arg)
 }
 
 void sig_handler(){
-	package tosend;
 	printf("\nCTRL+C detected\n");
 	if(wr_t!=-1) /*If wr_t hasn't been created yet*/
 	{
@@ -112,7 +113,6 @@ void sig_handler(){
 
 void * write_read ( void * arg){
 	int n;
-	int ntemp;
 	char ctemp;
 	int sockfd;
 	wr_arg_t * aux;
@@ -171,6 +171,9 @@ void * write_read ( void * arg){
 		  /*exit(-4);*/
 		  pthread_exit(NULL);
 		}
+		if(debug)
+			sem_post(&debug_sync);
+
 		if (debug){
 			if(tosend.op == 'D'){
 				printf("%c%d=>",tosend.op, convert_recv(tosend.data));
@@ -231,13 +234,11 @@ int main(int argc, char *argv[])
     char lixo[LEN+1];
     FILE * file;
     char ctemp, aux_char;
-    int n, aux;
     long long int ntemp;
     package * tosend;
     int end_operand = 0;
-    int i;
 	struct sigaction sact;
-	sigset_t new_set;
+	sem_init (&debug_sync,0,0);
     /*Flags*/
     int init = 0;
     int write_enable = 0;
@@ -245,7 +246,6 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&fifo, NULL);
     create_fifo ( &front, &back);
     sem_init (&fifo_cnt, 0,0);
-    int wr_arg;
 	/*Signals*/
 	sigset_t set;
 	
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 	
 	/* ORDERS FROM FILE */
 	if(argc==4){
-		strcpy(file_path,"txt/");
+		strcpy(file_path,"init/");
 		file = fopen(strcat((char*)file_path,argv[3]), "r");
 		if(file == NULL){
 			perror("ERROR opening file\n");
@@ -343,7 +343,6 @@ int main(int argc, char *argv[])
 					if(ctemp == 'K'){
 						/*if 'K' is inserted before the session is initialized the server must be warned. So the wr_t must be created to perform the communication operations*/
 						block_all_signals();
-						printf("Client closing\n");
 						tosend->op = 'K';
 						convert_send(0, tosend->data);				
 						send2fifo(tosend, end_operand);
@@ -407,7 +406,6 @@ int main(int argc, char *argv[])
 						}
 					}else{
 					 	if(sscanf(result, "%c%c%s",&ctemp, &aux_char,lixo)==2){
-					 		/* the result is not printed if the command given is the debug command*/
 							if(aux_char == ';'){
 								convert_send(0, tosend->data);
 								tosend->op = ctemp;
@@ -423,6 +421,8 @@ int main(int argc, char *argv[])
 				if(write_enable == 1){
 					block_all_signals();					
 					send2fifo(tosend, end_operand);
+					if(debug)
+						sem_wait(&debug_sync);
 					block_except_sigint();
 				}
 			}

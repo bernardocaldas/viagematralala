@@ -113,7 +113,7 @@ This is a subfunction of the server administration tool that goes through all th
 void display_client_info(pool_node * first){
 	pool_node *aux;
 	struct sockaddr_in sockinfo;
-	int addrlen;
+	socklen_t addrlen;
 	
 	aux=first;
 	addrlen=sizeof(sockinfo);

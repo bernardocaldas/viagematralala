@@ -8,6 +8,7 @@ Arguments: this function must receive a pointer to an integer containing the tim
 */
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <pthread.h>
 #include "fifo.h"
 #include "pool.h"
@@ -29,10 +30,8 @@ void loop_node_create(float times){
 
 void * manager ( void * arg){
 
-	int old_cancel_type;
 	int current_time;
-	float pool_avg, fifo_avg;
-	int tol;
+	float pool_avg;
 	float create_avg = 1;
 	float meter;
 	while(1){
@@ -44,28 +43,12 @@ void * manager ( void * arg){
 			pool_avg = pool_time_avg(&first_pool_node, current_time);
 			pthread_mutex_unlock(&poolmux);
 		
-			pthread_mutex_lock(&fifo_mux);
-			fifo_avg = fifo_time_avg(&back_server, current_time);
-			pthread_mutex_unlock(&fifo_mux);
 		
 			/*printf("avg pool time: %f avg fifo time %f\n", pool_avg, fifo_avg);*/
 			
-			/*			
-			if(fifo_avg>pool_avg){
-				create_avg=1;
-			}else{
-				if(fifo_avg<5){
-					create_avg=2;
-				}else{
-					if(fifo_avg<10){
-						create_avg=3;
-					}else{
-						create_avg=4;
-					}				
-				}				
-			}
-			*/
-			meter = fifo_count * pool_avg;
+			
+			meter = fifo_count * pool_avg/pool_no;
+			
 			if(meter<MAX_WAIT_TIME/2){
 				create_avg = 0.25;
 			}else{

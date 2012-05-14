@@ -24,7 +24,7 @@ If the client decides to abandon the session this thread will block until a new 
 #include <unistd.h>
 #include <limits.h>
 
-#define WAIT_TIME 5
+#define WAIT_TIME 30
 
 /* auxiliar function related to the termination of the server */
 void treatment_kill(void * arg)
@@ -53,7 +53,7 @@ void * yasc (void * arg)
     /*Calculator*/
 	Stack * stack;
 	char ctemp, csend;
-	int itemp, top, nsend, depth, opResult;
+	int itemp, nsend, depth, opResult;
 	long long int opResult_temp, opA, opB;
 	int n;
     package * torecv, *tosend;

@@ -4,20 +4,20 @@ vpath %.c src/
 
 CC = gcc
 
-CFLAGS = 
+CFLAGS = -Wall
 
 BIBS = -lpthread -lm
 
-all:  server client
+all:  yascS yascC
 
 yascS: server.o yasc.o stack.o fifo.o pool.o manager.o protocol.o
-	$(CC) $(CFLAGS) -g -o bin/server obj/server.o obj/yasc.o obj/stack.o obj/fifo.o obj/pool.o obj/manager.o obj/protocol.o $(BIBS)
+	$(CC) $(CFLAGS) -g -o bin/yascS obj/server.o obj/yasc.o obj/stack.o obj/fifo.o obj/pool.o obj/manager.o obj/protocol.o $(BIBS)
 	
 server.o: server.c yasc.h pool.h
 	$(CC) $(CFLAGS) -g -o obj/server.o -I include/ -c src/server.c 
 
 yascC: client.o protocol.o fifo.o
-	$(CC) $(CFLAGS) -g -o bin/client obj/client.o obj/protocol.o obj/fifo.o $(BIBS)
+	$(CC) $(CFLAGS) -g -o bin/yascC obj/client.o obj/protocol.o obj/fifo.o $(BIBS)
 	
 client.o: client.c protocol.h fifo.h
 	$(CC) $(CFLAGS) -g -o obj/client.o -I include/ -c src/client.c

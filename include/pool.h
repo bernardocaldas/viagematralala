@@ -7,8 +7,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#define POOL_INIT 1
-#define MIN_POOL 1
+#define POOL_INIT 5
 #define MAX_POOL 1000
 
 int pool_no;

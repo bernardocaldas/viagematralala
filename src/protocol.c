@@ -12,7 +12,7 @@ Authors:
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <protocol.h>
 #define SIZE 8
 /* 
 FUNCTION: convert_send
