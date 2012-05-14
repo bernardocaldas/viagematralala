@@ -6,17 +6,17 @@ CC = gcc
 
 CFLAGS = 
 
-BIBS = -lpthread
+BIBS = -lpthread -lm
 
 all:  server client
 
-server: server.o yasc.o stack.o fifo.o pool.o manager.o protocol.o
+yascS: server.o yasc.o stack.o fifo.o pool.o manager.o protocol.o
 	$(CC) $(CFLAGS) -g -o bin/server obj/server.o obj/yasc.o obj/stack.o obj/fifo.o obj/pool.o obj/manager.o obj/protocol.o $(BIBS)
 	
 server.o: server.c yasc.h pool.h
 	$(CC) $(CFLAGS) -g -o obj/server.o -I include/ -c src/server.c 
 
-client: client.o protocol.o fifo.o
+yascC: client.o protocol.o fifo.o
 	$(CC) $(CFLAGS) -g -o bin/client obj/client.o obj/protocol.o obj/fifo.o $(BIBS)
 	
 client.o: client.c protocol.h fifo.h
