@@ -4,9 +4,23 @@
 #include "pool.h"
 #include "yasc.h"
 
+/*FUNCTION: create_pool
+
+DESCRIPTION: returns a NULL pointer
+*/
+
 pool_node * create_pool(){
 	return NULL;
 }
+
+/*
+FUNCTION: create_pool_node
+
+DESCRIPTION: operations of initialization are performed here. The thread yasc is created as its stackmux and timemux. There will be some operation regarding the insertion of the node in the threadpool that is protected by a mutex
+
+ARGUMENTS: flag - describes a permanent (1) or non-permanent (2) thread
+
+*/
 
 void create_pool_node(pool_node ** first, int flag){
 
@@ -39,6 +53,12 @@ void create_pool_node(pool_node ** first, int flag){
 	
 }
 
+/*
+FUNCTION: remove_pool
+
+DESCRIPTION: function called when the server is going to terminate (due to a signal or to an 'F' input processed by the server administration). It destroys all the nodes in the pool by cancelling the thread yasc (aux1->thread)
+
+*/
 void remove_pool(pool_node ** first){
 	pool_node * aux1, *aux2;
 	aux1=*first;
@@ -46,10 +66,9 @@ void remove_pool(pool_node ** first){
 	while(aux1!= NULL){
 		if(aux1->thread!=NULL)
 		{
-			/*printf("Thread %d will die;\n", aux1->thread);*/
 			aux2=aux1->next;
 			pthread_mutex_unlock(&poolmux);/* A função de terminação da thread a ser cancelada invoca remove_pool_node(), que obtém ela própria o lock*/
-			pthread_cancel(*(aux1->thread));
+			pthread_cancel(*(aux1->thread)); 
 			pthread_join(*(aux1->thread),NULL);
 			pthread_mutex_lock(&poolmux);
 		}
@@ -58,8 +77,13 @@ void remove_pool(pool_node ** first){
 
 }
 
+/*
+FUNCTION: remove_pool_node
 
-void remove_pool_node(pool_node **first,pool_node * node){ /*poolmux tem de chegar desbloqueado a esta função*/
+DESCRIPTION: this function removes only one node from the threadpool
+
+*/
+void remove_pool_node(pool_node **first,pool_node * node){ 
 	pthread_mutex_lock(&poolmux);
 	pool_node * aux = *first;
 	if(node==*first)
@@ -81,6 +105,14 @@ void remove_pool_node(pool_node **first,pool_node * node){ /*poolmux tem de cheg
 	pthread_mutex_unlock(&poolmux);
 }
 
+/*FUNCTION: pool_time_avg
+
+DESCRIPTION: computes the avg time at which the requests are being processed. If the threads are active the time in the pool_node will be compared with the current_time so that we know how much time they have been active. Otherwise the node preserves the time that the last computation took
+
+ARGUMENTS: first - global variable that points to the beginning of threadpool
+			current_time - time (in seconds) at which the function is called
+
+*/
 float pool_time_avg(pool_node ** first, int current_time){
 	pool_node * aux;
 	aux = *first;

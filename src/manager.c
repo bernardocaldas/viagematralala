@@ -1,10 +1,13 @@
-/* Authors:
-67636 ~ João Silva
+/*
+Manager
+
+Programação de Sistemas
+2011/2012
+
+Authors:
 67557 ~ Bernardo Caldas
-
-Description: manages the size of the threadpool according to the flux of clients;
-
-Arguments: this function must receive a pointer to an integer containing the time when the program started;
+67636 ~ João Silva
+ 
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -16,7 +19,11 @@ Arguments: this function must receive a pointer to an integer containing the tim
 
 #define MAX_WAIT_TIME 5
 
-/* Esta função deverá estar integrada no .c e .h referente às estruturas de dados*/
+/* FUNCTION: loop_node_create
+
+DESCRIPTION: loop function that creates as many nodes as the ones specified in times. Although times is a float it has been ceiled beforehand. The threads created may never exceed MAX_POOL defined in pool.h
+
+*/
 void loop_node_create(float times){
 	int i;
 	for(i=0; i<times; i++){
@@ -26,7 +33,11 @@ void loop_node_create(float times){
 		}
 	}
 }
+/*
+Description: manages the size of the threadpool according to the flux of clients; it only controls the creation of new pool_nodes. Non permanent pool_nodes will terminate after WAIT_TIME
 
+Arguments: this function must receive a pointer to an integer containing the time when the program started;
+*/
 
 void * manager ( void * arg){
 

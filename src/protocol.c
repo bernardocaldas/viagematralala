@@ -13,7 +13,8 @@ Authors:
 #include <stdio.h>
 #include <string.h>
 #include <protocol.h>
-#define SIZE 8
+#define SIZE 8 /*protocolar size for the arrays in the package*/
+
 /* 
 FUNCTION: convert_send
 

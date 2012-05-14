@@ -27,15 +27,23 @@ Authors:
 pthread_t mainthread;
 int sockfd;
 
+/*
+FUNCTION: server_cleanup
 
+DESCRIPTION: this function cleans the request fifo and the threadpool. It also cancels the main thread which proceeds to cancel the pool manager.
+*/
 void server_cleanup (){
 
 	pthread_mutex_lock(&poolmux);
+	/*Entering critical Pool Region*/
 	remove_pool(&first_pool_node);
+	/*Exiting critical Pool Region*/
 	pthread_mutex_unlock(&poolmux);
 	
 	pthread_mutex_lock(&fifo_mux);
+	/*Entering critical FIFO region*/
 	FreeFifo(&front_server);
+	/*Exiting critical FIFO region*/
 	pthread_cancel(mainthread);
 	pthread_mutex_unlock(&fifo_mux);
 	
@@ -51,6 +59,7 @@ DESCRIPTION:
 Function that is run by a particular thread that is always available for input via terminal. It accepts two commands:
 	- F: closes the server and frees all its memory;
 	- M: displays info of the machines attached to the server at the current moment;
+All the signals are blocked except SIGINT. This is the only function that accepts the signal SIGINT and invokes a handler to treat such a signal in order to clean all the memory and perform the necessary closing functions.
 */
 void * servadmin (void * arg){
 	struct sigaction sact;
@@ -75,8 +84,6 @@ void * servadmin (void * arg){
 			}
 			else if(ctemp=='F'){
 				server_cleanup();
-				/*raise(SIGUSR1);*/
-				/*TEMP exit(1);*/
 			}
 			else{
 			printf("Please insert valid commands\n");

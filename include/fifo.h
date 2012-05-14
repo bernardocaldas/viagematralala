@@ -1,3 +1,15 @@
+/*
+Fifo.h
+
+Programação de Sistemas
+2011/2012
+
+Authors:
+67557 ~ Bernardo Caldas
+67636 ~ João Silva
+ 
+*/
+
 #ifndef _FIFO_
 #define _FIFO_
 
@@ -33,6 +45,6 @@ void FreeFifo(fifo_node ** front);
 void create_fifo(fifo_node ** front, fifo_node ** back);
 void * dequeue(fifo_node ** front, fifo_node ** back);
 void queue (fifo_node ** front, fifo_node ** back, void * item);
-float fifo_time_avg(fifo_node ** back, int current_time);
+
 #endif
 

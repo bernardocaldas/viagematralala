@@ -1,3 +1,15 @@
+/*
+Pool.h
+
+Programação de Sistemas
+2011/2012
+
+Authors:
+67557 ~ Bernardo Caldas
+67636 ~ João Silva
+ 
+*/
+
 #ifndef POOL_H
 #define POOL_H
 

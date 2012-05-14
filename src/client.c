@@ -8,25 +8,9 @@ Authors:
 67557 ~ Bernardo Caldas
 67636 ~ João Silva
 
-ARGUMENTS: 
-serverhost, portnumber (usually 2000+ & it must be the same as the server), filename (pre-written orders) ;
 
-DESCRIPTION: 
-Creates the socket and binds it with the proper address. Then a connection attempt is made: if the connection does not succeed the client will retry to connect again until the limit MAX_CONNECT is achieved; if the connection succeeds the program will ask for the initialization variable 'I'. Until such criterion is met there is no writing to the socket.
-
-RETURNS:
-- 0 by default (only reached if fgets == NULL);
-- 1 if the user inserts command K;
-
-- -1 the arguments usage wasn't correct;
-- -2 the specified host does not exist;
-- -3 maximum connecting attempts;
-- -4 error writing to or reading from socket;
-
-Problems: makefile can't use all flags - errors concerning the existence of some fields in struct hostent; 
 */
 
-/* TODO : funciona com IP e com hostname!??!?*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -110,6 +94,11 @@ void sig_handler(){
 	}
 	pthread_cancel(main_t);
 }
+
+/*FUNCTION:write_read
+
+DESCRIPTION: function that retrieves data from the FIFO and tries to send it to the server. If not succeded presents an error and forces the program to proceed to the cleaning operations.
+*/
 
 void * write_read ( void * arg){
 	int n;
@@ -209,6 +198,9 @@ void send2fifo(package * tosend, int end_operand){
 	}
 }
 
+/* FUNCTION: Main_clean
+DESCRIPTION: conducts the cleaning operations when the client is closed (via 'K' input, via signal or via error)
+*/
 void main_clean (void * arg){
 /* CLEANING */
 	main_clean_s * aux = (main_clean_s *)arg;
@@ -218,6 +210,26 @@ void main_clean (void * arg){
     if(*(aux->tosend)!=NULL)
     	free(*(aux->tosend));
 }
+/*
+FUNCTION: MAIN
+
+ARGUMENTS: 
+serverhost, portnumber (usually 2000+ & it must be the same as the server), filename (pre-written orders) ;
+
+DESCRIPTION: 
+Creates the socket and binds it with the proper address. Then a connection attempt is made: if the connection does not succeed the client will retry to connect again until the limit MAX_CONNECT is achieved; if the connection succeeds the program will ask for the initialization variable 'I'. Until such criterion is met there is no writing to the socket. The inputs from stdin or file are parsed and selected according to the criteria made available. Only the packages that are meant to be sent are put in the global fifo that connects main and wr_thread.
+
+RETURNS:
+- 0 by default (only reached if fgets == NULL);
+- 1 if the user inserts command K;
+
+- -1 the arguments usage wasn't correct;
+- -2 the specified host does not exist;
+- -3 maximum connecting attempts;
+- -4 error writing to or reading from socket;
+
+
+*/
 
 int main(int argc, char *argv[])
 {

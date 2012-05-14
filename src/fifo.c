@@ -1,3 +1,15 @@
+/*
+FIFO
+
+Programação de Sistemas
+2011/2012
+
+Authors:
+67557 ~ Bernardo Caldas
+67636 ~ João Silva
+ 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "fifo.h"
@@ -56,22 +68,4 @@ void FreeFifo(fifo_node ** front){
 	}	
 }
 
-float fifo_time_avg(fifo_node ** back, int current_time){
-	fifo_node * aux;
-	aux = *back;
-	float total = 0;
-	item_server * item;
-	
-	while(aux!=NULL){
-		item=(item_server*)aux->item;
-		total = total + ((float)current_time-(float)item->time);
-		aux=aux->next;
-	}	
-	
-	if(fifo_count == 0){
-		return 0;
-	}
-	
-	return  total/((float)fifo_count);
-}
 

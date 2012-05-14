@@ -7,14 +7,6 @@ Programação de Sistemas
 Authors:
 Bernardo Caldas
 João Silva
-
-ARGUMENTS: 
-arg - contains a 'pool_node' structure;
-
-DESCRIPTION:
-This function is called by threads placed in the pool. The threads will be blocked by the semaphore as soon as they are called. The semaphore wait function depends on whether the threads are permanent or not. Non-permanent threads have a timeout after which they will die. After the Stack is initialized through the 'I' command the calculator will be available.
-If the client decides to abandon the session this thread will block until a new request appears (or a timeout is reached);
-
 */
 #include "stack.h"
 #include "yasc.h"
@@ -40,7 +32,15 @@ void treatment_kill(void * arg)
 	remove_pool_node(&first_pool_node,self);
 
 }
+/*
+ARGUMENTS: 
+arg - contains a 'pool_node' structure;
 
+DESCRIPTION:
+This function is called by threads placed in the pool. The threads will be blocked by the semaphore as soon as they are called. The semaphore wait function depends on whether the threads are permanent or not. Non-permanent threads have a timeout after which they will die. After the Stack is initialized through the 'I' command the calculator will be available.
+If the client decides to abandon the session this thread will block until a new request appears (or a timeout is reached);
+
+*/
 
 void * yasc (void * arg)
 {	
