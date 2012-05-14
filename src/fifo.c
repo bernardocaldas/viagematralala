@@ -16,7 +16,7 @@ void * dequeue(fifo_node ** front,fifo_node ** back) {
 	{
 		*back=NULL;
 	}
-	printf("Tirei da queue o aux no. %X\n", (int)aux);
+	/*printf("Tirei da queue o aux no. %X\n", (int)aux);*/
 	item = (void*) aux->item;
 	free(aux);
 	return item;
@@ -35,7 +35,7 @@ void queue (fifo_node ** front, fifo_node ** back, void * item) {
 	else
 		(*back)->next = new;
 	*back = new;
-	printf("Pus na queue o new no. %X\n", (int)new);
+	/*printf("Pus na queue o new no. %X\n", (int)new);*/
 }
 
 void remove_fifo_node(fifo_node * aux)
@@ -64,7 +64,7 @@ float fifo_time_avg(fifo_node ** back, int current_time){
 	
 	while(aux!=NULL){
 		item=(item_server*)aux->item;
-		total = total + (current_time-item->time);
+		total = total + ((float)current_time-(float)item->time);
 		aux=aux->next;
 	}	
 	
@@ -72,6 +72,6 @@ float fifo_time_avg(fifo_node ** back, int current_time){
 		return 0;
 	}
 	
-	return  total/fifo_count;
+	return  total/((float)fifo_count);
 }
 

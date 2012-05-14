@@ -101,7 +101,7 @@ void wr_clean(void * arg)
 
 void sig_handler(){
 	package tosend;
-	printf("\nCTRL-C detected\n");
+	printf("\nCTRL+C detected\n");
 	if(wr_t!=-1) /*If wr_t hasn't been created yet*/
 	{
 		pthread_cancel(wr_t);
@@ -271,7 +271,7 @@ int main(int argc, char *argv[])
     portno = atoi(argv[2]);
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        perror("ERROR opening socket");
+        printf("ERROR opening socket\n");
 		exit(-5);
 	}
     server = gethostbyname(argv[1]);

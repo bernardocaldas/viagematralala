@@ -15,7 +15,6 @@ int pool_no;
 int active_threads;
 
 pthread_mutex_t poolmux;
-pthread_mutex_t active_thread_mux;
 
 typedef struct s_pool{
 	pthread_t * thread;

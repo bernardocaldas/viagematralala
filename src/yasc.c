@@ -24,17 +24,20 @@ If the client decides to abandon the session this thread will block until a new 
 #include <unistd.h>
 #include <limits.h>
 
-#define WAIT_TIME 60
+#define WAIT_TIME 5
 
 /* auxiliar function related to the termination of the server */
 void treatment_kill(void * arg)
 {
 	pool_node * self;
 	self= (pool_node *) arg;
+	
+	pthread_mutex_lock(&(self->timemux));
+	if(self->active==1){
+		active_threads--;
+	}
+	pthread_mutex_unlock(&(self->timemux));
 	remove_pool_node(&first_pool_node,self);
-	pthread_mutex_lock(&active_thread_mux);
-	active_threads--;
-	pthread_mutex_unlock(&active_thread_mux);
 
 }
 
@@ -70,7 +73,7 @@ void * yasc (void * arg)
     		timer.tv_sec = time(NULL)+WAIT_TIME;
     		timer.tv_nsec = 0;
 			if(sem_timedwait(&sem_fifo_used, &timer)==-1){
-				printf("Thread will die; sem_out %d\n", n);
+				printf("Thread with ID %d will die \n",(int)pthread_self());
 				pthread_exit(NULL);
 		}
 		}else{
@@ -83,12 +86,11 @@ void * yasc (void * arg)
 		item =(item_server*) dequeue(&front_server,&back_server);
 		sem_post(&sem_fifo_free);
 		fifo_count--;
+		active_threads++;
 		/* Exiting Critcal Region */
 		pthread_mutex_unlock(&fifo_mux);
 		
-		pthread_mutex_lock(&active_thread_mux);
-		active_threads++;
-		pthread_mutex_unlock(&active_thread_mux);
+
 		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
 		
 		newsockfd = item->socket;
@@ -107,7 +109,7 @@ void * yasc (void * arg)
 		do{
 			n = read(newsockfd,torecv,sizeof(package));
 			if (n <= 0){
-				perror("ERROR reading from socket");
+				printf("ERROR reading from socket\n");
 				goto out; /* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
 			}
 			if(torecv->op == 'I'){
@@ -122,7 +124,7 @@ void * yasc (void * arg)
 				tosend->op = 'E';
 				n = write(newsockfd, tosend, sizeof(package));
 				if (n <= 0) {
-					perror("ERROR writing to socket");
+					printf("ERROR writing to socket");
 					goto out;
 				}
 			}
@@ -144,19 +146,16 @@ void * yasc (void * arg)
 			pthread_mutex_unlock(&(self->stackmux));
 			if(depth == 0)
 			{
-				printf("Pilha vazia: Operação inválida\n");
 				csend = 'E';
 			}
 			else{
 				if(depth==1){
-					printf("Apenas um elemento: Operação inválida\n");
 					csend = 'E';
 				}
 				else{
 					switch(ctemp){
 					/* SOMA*/
 					case '+':
-						printf("Apanhei uma soma\n");
 						pthread_mutex_lock(&(self->stackmux));
 						opA=(long long int)PopStack(&stack);
 						opB=(long long int)PopStack(&stack);
@@ -174,7 +173,6 @@ void * yasc (void * arg)
 						break;
 					/*SUBTRAÇÃO*/
 					case '-':
-						printf("Apanhei uma subtração\n");
 						pthread_mutex_lock(&(self->stackmux));
 						opA=(long long int)PopStack(&stack);
 						opB=(long long int)PopStack(&stack);
@@ -191,7 +189,6 @@ void * yasc (void * arg)
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case '*':
-						printf("Apanhei uma multiplicação\n");
 						pthread_mutex_lock(&(self->stackmux));
 						opA=(long long int)PopStack(&stack);
 						opB=(long long int)PopStack(&stack);
@@ -208,7 +205,6 @@ void * yasc (void * arg)
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case '/':
-						printf("Apanhei uma divisão\n");
 						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
@@ -219,23 +215,19 @@ void * yasc (void * arg)
 						} else{
 							opResult=opA/opB;
 							PushStack(&stack,opResult);
-							printf("%lld/%lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
 					case '%':
-						printf("Apanhei um módulo\n");
 						pthread_mutex_lock(&(self->stackmux));
 						opA=PopStack(&stack);
 						opB=PopStack(&stack);
 						opResult=opA%opB;
 						if(opB==0){
-							printf("ERROR: divide by zero\n");
 							FreeStack(&stack);
 							csend = 'I';
 						} else{
 							PushStack(&stack,opResult);
-							printf("%lld mod %lld=%d\n",opA,opB,opResult);
 						}
 						pthread_mutex_unlock(&(self->stackmux));
 						break;
@@ -254,10 +246,8 @@ void * yasc (void * arg)
 						pthread_mutex_lock(&(self->stackmux));
 						FreeStack(&stack);
 						pthread_mutex_unlock(&(self->stackmux));
-						printf("A pilha está agora vazia\n");
 						break;
 					case 'D':
-						printf("Apanhei um número %d\n", itemp);
 						pthread_mutex_lock(&(self->stackmux));
 						PushStack(&stack, itemp);
 						pthread_mutex_unlock(&(self->stackmux));
@@ -267,20 +257,16 @@ void * yasc (void * arg)
 						depth = DepthStack(&stack);
 						pthread_mutex_unlock(&(self->stackmux));
 						if(depth == 0){
-							printf("A pilha está vazia\n");
 							csend = 'E';
 						}else{
 							nsend = depth;
-							printf("A pilha tem %d elemento(s)\n", nsend);
 						}
 						break;
 					case 'R':
 						pthread_mutex_lock(&(self->stackmux));
 						if(DepthStack(&stack)==1){
 							nsend = PopStack(&stack);
-							printf("O resultado é: %d\n", nsend);
 						}else{
-							printf("Pilha vazia ou com demasiados elementos\n");
 							csend = 'E';
 						}	
 						pthread_mutex_unlock(&(self->stackmux));
@@ -288,12 +274,10 @@ void * yasc (void * arg)
 					case 'T':
 						pthread_mutex_lock(&(self->stackmux));
 						if(DepthStack(&stack) == 0){
-							printf("A pilha está vazia\n");
 							csend = 'E';
 						}
 						else{
 							nsend = PopStack(&stack);
-							printf("Topo da pilha: %d\n", nsend);
 							PushStack(&stack, nsend);
 						}
 					    pthread_mutex_unlock(&(self->stackmux));
@@ -318,13 +302,13 @@ void * yasc (void * arg)
 		tosend->op = csend;
 		n = write(newsockfd, tosend, sizeof(package));
 		if (n < 0) {
-			perror("ERROR writing to socket");
+			printf("ERROR writing to socket\n");
 			break;
 		}
 
 		n = read(newsockfd,torecv,sizeof(package));
 		if (n <= 0) {
-			perror("ERROR reading from socket");
+			printf("ERROR reading from socket\n");
 			break;
 		}
 		ctemp = torecv->op;
@@ -334,13 +318,15 @@ void * yasc (void * arg)
 	}
 	
 	out:
-		printf("Thread will close its socket\n");
 		close(newsockfd);
 		self->socket = 0;
+    	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,&old_cancel_type);
 		pthread_mutex_lock(&(self->timemux));
 		self->time =time(NULL)-self->time;
 		self->active = 0; 
-		pthread_mutex_unlock(&(self->timemux));		
+		active_threads--;
+		pthread_mutex_unlock(&(self->timemux));	
+		pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);	
 		/* CLEANING */
 		pthread_mutex_lock(&(self->stackmux));
 		FreeStack(&stack);

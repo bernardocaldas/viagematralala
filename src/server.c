@@ -123,7 +123,6 @@ int main(int argc, char *argv[])
 {
 /* MUTEX */
 	pthread_mutex_init(&fifo_mux, NULL);
-	pthread_mutex_init(&active_thread_mux,NULL);
 
 /*SIGNALS*/
 	/*signal(SIGUSR1,treatment);*/
@@ -159,7 +158,7 @@ int main(int argc, char *argv[])
      }
      sockfd = socket(AF_INET, SOCK_STREAM, 0);
      if (sockfd < 0) 
-        error("ERROR opening socket");
+        perror("ERROR opening socket");
      bzero((char *) &serv_addr, sizeof(serv_addr));
      portno = atoi(argv[1]);
      serv_addr.sin_family = AF_INET;
@@ -170,7 +169,7 @@ int main(int argc, char *argv[])
               perror("ERROR on binding");
               exit(-1);
      }
-     listen(sockfd,2); /* 1000 means???*/
+     listen(sockfd,100); 
      clilen = sizeof(cli_addr);
      
      threadpool(); /* creates threadpool */

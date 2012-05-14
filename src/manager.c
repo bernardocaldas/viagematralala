@@ -11,9 +11,12 @@ Arguments: this function must receive a pointer to an integer containing the tim
 #include <pthread.h>
 #include "fifo.h"
 #include "pool.h"
+#include "math.h"
+
+#define MAX_WAIT_TIME 5
 
 /* Esta função deverá estar integrada no .c e .h referente às estruturas de dados*/
-void loop_node_create(int times){
+void loop_node_create(float times){
 	int i;
 	for(i=0; i<times; i++){
 		if(pool_no<MAX_POOL){
@@ -30,7 +33,8 @@ void * manager ( void * arg){
 	int current_time;
 	float pool_avg, fifo_avg;
 	int tol;
-	int create_avg = 1;
+	float create_avg = 1;
+	float meter;
 	while(1){
 		pthread_testcancel();
 		sleep(1);
@@ -44,9 +48,10 @@ void * manager ( void * arg){
 			fifo_avg = fifo_time_avg(&back_server, current_time);
 			pthread_mutex_unlock(&fifo_mux);
 		
-			printf("avg pool time: %f avg fifo time %f\n", pool_avg, fifo_avg);
-						
-			if(fifo_avg<2){
+			/*printf("avg pool time: %f avg fifo time %f\n", pool_avg, fifo_avg);*/
+			
+			/*			
+			if(fifo_avg>pool_avg){
 				create_avg=1;
 			}else{
 				if(fifo_avg<5){
@@ -59,9 +64,20 @@ void * manager ( void * arg){
 					}				
 				}				
 			}
+			*/
+			meter = fifo_count * pool_avg;
+			if(meter<MAX_WAIT_TIME/2){
+				create_avg = 0.25;
+			}else{
+				if(meter<MAX_WAIT_TIME){
+					create_avg = 0.5;
+				}else{
+					create_avg = 1;
+				}
+			}
 			
 			/*if the FIFO is overcrowded but the average waiting time does not surpasses the pool average waiting time*/
-			loop_node_create(create_avg*fifo_count);
+			loop_node_create(ceilf(create_avg*(float)fifo_count));
 		}
 	}
 

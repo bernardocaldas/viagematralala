@@ -46,7 +46,7 @@ void remove_pool(pool_node ** first){
 	while(aux1!= NULL){
 		if(aux1->thread!=NULL)
 		{
-			printf("Thread %d will die;\n", aux1->thread);
+			/*printf("Thread %d will die;\n", aux1->thread);*/
 			aux2=aux1->next;
 			pthread_mutex_unlock(&poolmux);/* A função de terminação da thread a ser cancelada invoca remove_pool_node(), que obtém ela própria o lock*/
 			pthread_cancel(*(aux1->thread));
