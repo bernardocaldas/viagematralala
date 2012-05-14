@@ -53,12 +53,21 @@ sem_t fifo_cnt;
 pthread_mutex_t fifo;
 fifo_node * front;
 fifo_node * back;
+int debug;
 
 typedef struct main_clean_s 
 {
 	FILE ** fp;
 	package ** tosend;
 }main_clean_s;
+
+
+typedef struct wr_arg_t
+{
+	int wr_arg;
+	pthread_t main;
+}wr_arg_t;
+
 
 void wr_clean(package * to_recv, fifo_node **front)
 {
@@ -70,18 +79,16 @@ void * write_read ( void * arg){
 	int ntemp;
 	char ctemp;
 	int sockfd;
-	int debug;
-	int * aux;
-
+	wr_arg_t * aux;
+	pthread_t main_t;
 	package * tosend, *torecv; 
 	item_client *item;
 	
     torecv = (package*) malloc(sizeof(package));
     
-    aux = (int*) arg;
-    debug = aux[DEBUG_I];
-    sockfd = aux[SOCKET_I];
-    
+    aux = (wr_arg_t*) arg;
+    sockfd = aux->wr_arg;
+    main_t = aux->main;
 	while(1){
 		sem_wait(&fifo_cnt);
 		pthread_mutex_lock(&fifo);
@@ -95,8 +102,9 @@ void * write_read ( void * arg){
 		n = write(sockfd,tosend,sizeof(package));
 		if (n <= 0){
 		  printf("ERROR writing to socket\n");
-		  /* CLEAN */
-		  exit(-4);
+		  pthread_cancel(main_t);
+		  /*exit(-4);*/
+		  pthread_exit(NULL);
 		 }
 		/* if command 'K' is given the client writes to the socket and then terminates without waiting for an answer*/
 		if(ctemp == 'K' ){ 
@@ -114,8 +122,9 @@ void * write_read ( void * arg){
 		n = read(sockfd,torecv,sizeof(package));
 		if(n<= 0){
 		  printf("ERROR reading from socket\n");
-		  /* CLEAN */
-		  exit(-4);
+		  pthread_cancel(main_t);
+		  /*exit(-4);*/
+		  pthread_exit(NULL);
 		}
 		if (debug){
 			if(tosend->op == 'D'){
@@ -183,7 +192,6 @@ int main(int argc, char *argv[])
     int end_operand = 0;
     int i;
     /*Flags*/
-    int debug = 0;
     int init = 0;
     int write_enable = 0;
     /*Fifo*/
@@ -191,12 +199,23 @@ int main(int argc, char *argv[])
     create_fifo ( &front, &back);
     sem_init (&fifo_cnt, 0,0);
     pthread_t wr_thread;
-    int wr_arg[2];
+    int wr_arg;
 	/*Signals*/
 	sigset_t set;
 	sigfillset (&set);
     sigprocmask(SIG_BLOCK, &set, NULL);
 	
+
+    pthread_t main_t;
+    int old_cancel_type;
+    wr_arg_t arg;
+    main_clean_s aux_clean;
+
+    aux_clean.fp=&file;
+    aux_clean.tosend=&tosend;	
+
+	debug = 0;
+
 	/* CONECTION WITH SERVER */
     if (argc < 3) {
        fprintf(stderr,"usage %s hostname port\n", argv[0]);
@@ -220,6 +239,8 @@ int main(int argc, char *argv[])
     serv_addr.sin_family = AF_INET;
     bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
     serv_addr.sin_port = htons(portno);
+    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,&old_cancel_type);
+    pthread_cleanup_push(main_clean,(void*)&aux_clean);
     
     for (connect_cnt = 0; connect_cnt<MAX_CONNECT; connect_cnt++){
     	aux_connect=connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr));
@@ -253,7 +274,9 @@ int main(int argc, char *argv[])
 	/* COMMUNICATION CYCLE */
 	printf("To initialize communication session press 'I'\nTo terminate current session press 'K'\n");
     tosend = (package*) malloc(sizeof(package));
-
+	arg.wr_arg = sockfd;
+	arg.main=pthread_self();
+	pthread_create(&wr_thread, NULL, write_read, (void *) &arg);
 	bzero(buffer,LEN+1);
 	while(fgets(buffer,LEN,file)!=NULL){
 		result=strtok((char*)buffer,delims);
@@ -264,10 +287,8 @@ int main(int argc, char *argv[])
 				if(sscanf(result,"%c%s", &ctemp, lixo)==1){
 					/*Client closes without waiting for server response*/
 					if(ctemp == 'K'){
-						/*if 'K' is inserted before the session is initialized the server must be warned. So the wr_thread must be created to perform the communication operations*/ 
-						wr_arg[DEBUG_I] = debug;
-						wr_arg[SOCKET_I] = sockfd;
-    					pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
+						/*if 'K' is inserted before the session is initialized the server must be warned. So the wr_thread must be created to perform the communication operations*/
+
 						printf("Client closing\n");
 						tosend->op = 'K';
 						convert_send(0, tosend->data);
@@ -282,9 +303,7 @@ int main(int argc, char *argv[])
 					if(ctemp == 'I'){
 						printf("Communication session has been initialized; to enter debug mode press 'G'\n");
 						init = 1;
-						wr_arg[DEBUG_I] = debug;
-						wr_arg[SOCKET_I] = sockfd;
-    					pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
+
 						/* to minimize the use of global variables the socket file descriptor and the debug flag will be sent via argument to the write_read thread */
 						
 					}else{
@@ -354,13 +373,7 @@ int main(int argc, char *argv[])
 		bzero(buffer,256);
     }
     /* functions used specially when reading a file: all the data has been inputed however the server hasn't been able to respond accordingly, so a pthread_join has to be used. The end of the wr_thread is forced by sending a 'K'*/
-	if(init==0){
-		/* if session was not initialized but the program reached the end of file, the server will have to read a 'K' terminator
-The only reason why this section is here is to prevent such mishappenings*/
-		wr_arg[DEBUG_I] = debug;
-		wr_arg[SOCKET_I] = sockfd;
-		pthread_create(&wr_thread, NULL, write_read, (void *) wr_arg);
-	}    
+   
 	tosend->op = 'K';	
     convert_send(0, tosend->data);
 	send2fifo(tosend, end_operand);
@@ -368,5 +381,6 @@ The only reason why this section is here is to prevent such mishappenings*/
 
     close(sockfd);
     /* CLEANING */
+    pthread_cleanup_pop(0);
     return 0;
 }
