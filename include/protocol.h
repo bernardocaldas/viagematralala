@@ -1,7 +1,7 @@
 #ifndef _PROTOCOL_H_
 #define _PROTOCOL_H_
 
-#define LEN 255 /* fgets reading length*/
+#define LEN 1023 /* fgets reading length*/
 
 typedef struct s_package {
 	char data[8];
