@@ -53,11 +53,13 @@ sem_t fifo_cnt;
 pthread_mutex_t fifo;
 fifo_node * front;
 fifo_node * back;
+
 typedef struct main_clean_s 
 {
 	FILE ** fp;
 	package ** tosend;
 }main_clean_s;
+
 void wr_clean(package * to_recv, fifo_node **front)
 {
 	free(to_recv);
@@ -190,6 +192,10 @@ int main(int argc, char *argv[])
     sem_init (&fifo_cnt, 0,0);
     pthread_t wr_thread;
     int wr_arg[2];
+	/*Signals*/
+	sigset_t set;
+	sigfillset (&set);
+    sigprocmask(SIG_BLOCK, &set, NULL);
 	
 	/* CONECTION WITH SERVER */
     if (argc < 3) {
@@ -257,7 +263,7 @@ int main(int argc, char *argv[])
 			if(init == 0){
 				if(sscanf(result,"%c%s", &ctemp, lixo)==1){
 					/*Client closes without waiting for server response*/
-					if(ctemp == 'K' ){
+					if(ctemp == 'K'){
 						/*if 'K' is inserted before the session is initialized the server must be warned. So the wr_thread must be created to perform the communication operations*/ 
 						wr_arg[DEBUG_I] = debug;
 						wr_arg[SOCKET_I] = sockfd;
